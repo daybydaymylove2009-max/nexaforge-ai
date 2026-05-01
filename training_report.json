@@ -1,0 +1,40 @@
+{
+  "timestamp": "2026-05-01T15:46:06.008412",
+  "model_id": "unsloth/gemma-2b-it",
+  "output_dir": "./gemma-2b-finetuned-lora",
+  "training_config": {
+    "mode_name": "💰 穷人模式 (Minimal)",
+    "device": "cpu",
+    "epochs": 1,
+    "batch_size": 1,
+    "gradient_accumulation_steps": 16,
+    "learning_rate": 0.0001,
+    "max_seq_length": 256,
+    "lora_r": 4,
+    "lora_alpha": 8,
+    "quantization": null,
+    "optimizer": "adamw_torch"
+  },
+  "hardware": {
+    "score": 35,
+    "device": "cpu",
+    "cpu_count": 24,
+    "total_ram_gb": 31.79323959350586,
+    "gpu_vram_gb": 0.0
+  },
+  "dataset": {
+    "path": "datasets/example.jsonl",
+    "samples": 4
+  },
+  "training_result": {
+    "total_time_seconds": 11.597460508346558,
+    "total_time_formatted": "0h 0m 11s",
+    "status": "success"
+  },
+  "resource_usage": {
+    "peak_memory_gb": 24.827381134033203,
+    "peak_cpu_percent": 100.0,
+    "elapsed_time_seconds": 15.297923564910889,
+    "elapsed_time_formatted": "0h 0m 15s"
+  }
+}

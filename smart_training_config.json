@@ -1,0 +1,41 @@
+{
+  "timestamp": "2026-05-01T16:16:50.618021",
+  "auto_mode": true,
+  "selected_mode": "poor",
+  "hardware": {
+    "cpu_count": 24,
+    "cpu_freq_mhz": 2100.0,
+    "total_ram_gb": 31.79323959350586,
+    "available_ram_gb": 16.57952880859375,
+    "has_gpu": false,
+    "gpu_name": "无",
+    "gpu_vram_gb": 0.0,
+    "gpu_count": 0,
+    "disk_free_gb": 30.43743896484375,
+    "os_name": "Windows 11",
+    "python_version": "3.13.13",
+    "torch_version": "2.9.1+cpu",
+    "cuda_available": false,
+    "cuda_version": "N/A"
+  },
+  "hardware_score": 35,
+  "training_config": {
+    "mode_name": "💰 穷人模式 (Minimal)",
+    "mode_desc": "最低资源占用，可在老旧设备上运行，速度最慢但最稳定",
+    "device": "cpu",
+    "batch_size": 1,
+    "gradient_accumulation_steps": 16,
+    "epochs": 1,
+    "learning_rate": 0.0001,
+    "max_seq_length": 256,
+    "lora_r": 4,
+    "lora_alpha": 8,
+    "lora_dropout": 0.1,
+    "quantization": null,
+    "optimizer": "adamw_torch",
+    "estimated_time_per_epoch": "4-8小时",
+    "estimated_vram_gb": 0,
+    "recommended_for": "CPU < 4核, 内存 < 8GB, 无GPU"
+  },
+  "adaptive_enabled": true
+}

@@ -292,8 +292,8 @@ pip install torch torchvision torchaudio --index-url https://download.pytorch.or
 
 ## 📞 联系方式
 
-- 项目主页：https://github.com/yourusername/nexaforge-ai
-- 问题反馈：https://github.com/yourusername/nexaforge-ai/issues
+- 项目主页：https://github.com/daybydaymylove2009-max/nexaforge-ai
+- 问题反馈：https://github.com/daybydaymylove2009-max/nexaforge-ai/issues
 
 ---
 

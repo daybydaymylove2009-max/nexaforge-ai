@@ -1,0 +1,23 @@
+# GitHub Repository Metadata
+# https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-repository-files
+
+name: nexaforge-ai
+description: "智核万炼® NexaForge AI - 智能硬件检测与AI训练环境评估平台"
+homepage: https://github.com/daybydaymylove2009-max/nexaforge-ai
+topics:
+  - hardware-monitoring
+  - ai-training
+  - deep-learning
+  - hardware-detection
+  - cuda
+  - pytorch
+  - tensorflow
+  - fastapi
+  - react
+  - hardware-benchmark
+  - machine-learning
+  - gpu-monitoring
+  - system-monitoring
+  - windows-hardware
+  - linux-hardware
+  - performance-benchmark

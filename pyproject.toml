@@ -1,0 +1,26 @@
+[project]
+name = "nexaforge-ai"
+version = "1.0.0"
+description = "智核万炼® NexaForge AI - 智能微调训练平台"
+authors = ["NexaForge AI Team <team@nexaforge.ai>"]
+readme = "README.md"
+requires-python = ">=3.8"
+dependencies = [
+    "fastapi>=0.100.0",
+    "uvicorn>=0.23.0",
+    "nvidia-ml-py3>=7.352.0",
+    "psutil>=7.2.2",
+    "py3nvml>=0.2.7",
+    "pythonnet>=3.0.5",
+    "pywin32>=311",
+    "wmi>=1.5.1",
+    "websockets>=13.1",
+]
+
+[project.scripts]
+nexaforge = "nexaforge:main"
+hardware-monitor = "hardware_server:main"
+
+[tool.uv]
+index-url = "https://pypi.org/simple"
+extra-index-url = ["https://pypi.org/simple"]

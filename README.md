@@ -13,31 +13,40 @@
 
 ---
 
-## 🎯 设计理念
+## 📋 项目简介
 
-**智核万炼**致力于降低AI模型训练的技术门槛，让每个人都能轻松训练和微调自己的AI模型。
+智核万炼® NexaForge AI 是一个专为从普通到专业企业级用户设计的AI模型微调训练平台。通过智能硬件检测和自适应配置，让每个人都能轻松完成AI训练，无需专业技术背景。
 
-### 核心特性
+### ✨ 核心特性
 
-- 🚀 **开箱即用** - 无需复杂配置，一键启动训练
-- 🤖 **智能适配** - 自动检测硬件，智能选择最优训练配置
-- 🎛️ **多模式训练** - 支持5种训练模式，适配不同硬件环境
-- 📊 **实时监控** - 训练过程资源监控，智能调优
-- 🌐 **中文优化** - 针对中文用户优化，支持国内镜像加速
+- 🤖 **智能硬件检测** - 全自动检测CPU、内存、GPU等硬件资源
+- 🎯 **智能训练推荐** - 根据硬件配置自动推荐最佳训练模式
+- ⚡ **实时资源监控** - Web界面实时监控训练时的资源使用情况
+- 🚀 **五种训练模式** - 从入门到顶级配置全覆盖
+- 📊 **完整训练报告** - 自动生成详细的训练和硬件评估报告
+- 🎨 **友好用户界面** - 美观的Web监控界面和CLI操作体验
+- 🔌 **一键启动** - 真正的开箱即用，零配置开始训练
 
 ---
 
-## 📦 快速开始
+## 🚀 快速开始
 
-### 方式一：一键启动 (推荐)
+### 方式一：一键启动（推荐）
 
-**Windows:**
+#### Windows 用户
+
 ```bash
+# 启动训练服务
 双击 start.bat
+
+# 启动硬件监控服务
+双击 start-monitor.bat
 ```
 
-**Linux/Mac:**
+#### Linux/Mac 用户
+
 ```bash
+# 启动训练服务
 chmod +x start.sh
 ./start.sh
 ```
@@ -45,185 +54,227 @@ chmod +x start.sh
 ### 方式二：命令行启动
 
 ```bash
-# 全自动模式 (推荐)
+# 智能训练模式（全自动）
 python nexaforge.py --auto
 
-# 交互式模式
+# 交互式训练模式
 python nexaforge.py --interactive
 
-# 指定数据集
-python nexaforge.py --dataset datasets/your_data.jsonl
+# 启动硬件监控服务
+python hardware_server.py
+```
+
+### 访问监控界面
+
+启动硬件监控服务后，在浏览器中打开：
+
+```
+🌐 主界面: http://localhost:8000
+📚 API文档: http://localhost:8000/docs
 ```
 
 ---
 
-## 🔧 安装指南
-
-### 环境要求
-
-- Python 3.8+
-- 内存: 8GB+ (推荐16GB+)
-- 存储: 10GB+ 可用空间
-- GPU: 可选 (NVIDIA GPU可加速训练)
-
-### 手动安装
-
-```bash
-# 克隆项目
-git clone https://github.com/yourusername/nexaforge-ai.git
-cd nexaforge-ai
-
-# 创建虚拟环境
-python -m venv venv
-
-# 激活环境
-# Windows:
-venv\Scripts\activate
-# Linux/Mac:
-source venv/bin/activate
-
-# 安装依赖
-pip install -r requirements.txt
-```
-
----
-
-## 📊 训练模式
-
-智核万炼提供5种智能训练模式，系统自动根据您的硬件配置推荐最优方案：
-
-| 模式 | 名称 | 适用场景 | 预估时间 |
-|------|------|----------|----------|
-| 💰 | 穷人模式 | CPU < 4核, 内存 < 8GB | 4-8小时/轮 |
-| ⚖️ | 常态模式 | CPU >= 4核, 内存 >= 16GB | 1-2小时/轮 |
-| 💎 | 富人模式 | CPU >= 8核, 内存 >= 32GB | 30-60分钟/轮 |
-| 👑 | 土豪模式 | GPU >= 16GB | 10-20分钟/轮 |
-| 🚀 | 最大模式 | 多卡A100/H100 | 2-5分钟/轮 |
-
----
-
-## 📁 项目结构
+## 📦 项目结构
 
 ```
 nexaforge-ai/
-├── nexaforge.py          # 主入口程序
-├── finetune.py           # 智能训练核心
-├── hardware_analyzer.py  # 硬件分析器
-├── smart_trainer.py      # 智能训练管理器
-├── start.bat             # Windows启动脚本
-├── start.sh              # Linux/Mac启动脚本
-├── requirements.txt      # 依赖配置
-├── datasets/             # 数据集目录
-│   └── example.jsonl     # 示例数据
-├── outputs/              # 模型输出目录
-├── logs/                 # 日志目录
-└── configs/              # 配置文件目录
+├── nexaforge.py              # 智能训练主程序
+├── finetune.py               # 微调训练核心
+├── hardware_monitor.py       # 硬件侦测模块
+├── hardware_server.py        # 硬件监控Web服务
+├── smart_trainer.py          # 智能训练器
+├── hardware_analyzer.py      # 硬件分析器
+├── start.bat                 # Windows一键启动训练
+├── start.sh                  # Linux/Mac一键启动训练
+├── start-monitor.bat         # Windows一键启动监控
+├── requirements.txt          # 依赖包列表
+├── README.md                 # 项目文档
+├── dataset.jsonl             # 示例训练数据
+└── outputs/                  # 模型输出目录（自动创建）
 ```
 
 ---
 
-## 📝 数据格式
+## 🎯 五种训练模式
 
-训练数据使用JSONL格式，每条记录包含以下字段：
+智核万炼提供五种智能训练模式，系统会根据您的硬件自动推荐最佳模式：
+
+| 模式 | 名称 | 适用场景 | 预估时间/轮 |
+|------|------|----------|------------|
+| 💰 | 穷人模式 | CPU < 4核, 内存 < 8GB | 4-8小时 |
+| ⚖️ | 常态模式 | CPU >= 4核, 内存 >= 16GB | 1-2小时 |
+| 💎 | 富人模式 | CPU >= 8核, 内存 >= 32GB | 30-60分钟 |
+| 👑 | 土豪模式 | GPU >= 16GB VRAM | 10-20分钟 |
+| 🚀 | 最大模式 | 多卡A100/H100 | 2-5分钟 |
+
+### 硬件评分标准
+
+系统会根据硬件配置给出综合评分（0-100分）：
+
+- 🌟 **顶级配置** (80-100分) - 推荐土豪/最大模式
+- ✨ **优秀配置** (60-79分) - 推荐富人模式
+- ⚡ **良好配置** (40-59分) - 推荐常态模式
+- 💡 **基础配置** (20-39分) - 推荐穷人/常态模式
+- ⚠️ **入门配置** (0-19分) - 建议升级硬件
+
+---
+
+## 📊 硬件监控API
+
+### 实时监控接口
+
+#### WebSocket 实时数据
+```
+ws://localhost:8000/ws
+```
+每秒推送一次硬件快照数据。
+
+#### REST API
+
+| 端点 | 方法 | 说明 |
+|------|------|------|
+| `/` | GET | 主监控界面 |
+| `/api/snapshot` | GET | 获取当前硬件快照 |
+| `/api/recommendations` | GET | 获取训练推荐 |
+| `/api/history` | GET | 获取历史数据 |
+| `/docs` | GET | API文档 (Swagger UI) |
+
+#### 数据格式示例
 
 ```json
 {
-  "instruction": "任务描述",
-  "input": "输入内容 (可选)",
-  "output": "期望输出"
-}
-```
-
-### 示例数据
-
-```json
-{"instruction": "请介绍智核万炼AI训练平台", "input": "", "output": "智核万炼是一款开箱即用的AI模型微调训练平台..."}
-{"instruction": "翻译为英文", "input": "今天天气很好", "output": "The weather is very good today."}
-```
-
----
-
-## 🎮 使用示例
-
-### 示例1：全自动训练
-
-```bash
-python nexaforge.py --auto
-```
-
-系统自动检测硬件 → 选择最优配置 → 开始训练 → 保存模型
-
-### 示例2：使用自定义数据
-
-```bash
-# 准备数据集 datasets/my_data.jsonl
-python nexaforge.py --dataset datasets/my_data.jsonl --auto
-```
-
-### 示例3：交互式模式
-
-```bash
-python nexaforge.py --interactive
-```
-
-根据提示选择训练模式、配置参数。
-
----
-
-## 🔬 硬件检测
-
-智核万炼会自动检测以下硬件信息：
-
-- **CPU**: 核心数、频率、架构
-- **内存**: 总容量、可用容量
-- **GPU**: 型号、显存、CUDA版本
-- **磁盘**: 可用空间
-
-并生成详细的硬件报告和训练建议。
-
----
-
-## 📈 训练报告
-
-每次训练完成后，系统会生成详细的训练报告：
-
-```json
-{
-  "timestamp": "2024-01-01T12:00:00",
-  "training_config": { ... },
-  "hardware": { ... },
-  "training_result": {
-    "total_time": "1h 23m",
-    "status": "success"
+  "snapshot": {
+    "timestamp": "2024-01-01T12:00:00",
+    "system": {
+      "os": "Windows 11",
+      "python_version": "3.10.0"
+    },
+    "cpu": {
+      "count": 24,
+      "percent": 35.5
+    },
+    "memory": {
+      "total": 31.8,
+      "percent": 45.2
+    },
+    "gpu": {
+      "available": true,
+      "devices": [
+        {
+          "name": "NVIDIA GeForce RTX 4090",
+          "memory_total": 24.0
+        }
+      ]
+    }
   },
-  "resource_usage": {
-    "peak_memory": "12.5GB",
-    "peak_cpu": "85%"
+  "recommendations": {
+    "score": 75,
+    "recommended_mode": "rich"
   }
 }
 ```
 
 ---
 
-## 🛠️ 高级配置
+## 📝 训练数据格式
 
-### 环境变量
+使用JSONL格式，每条数据包含：
 
-| 变量名 | 说明 | 默认值 |
-|--------|------|--------|
-| `AUTO_TRAIN` | 启用自动训练模式 | `false` |
-| `DATASET_PATH` | 数据集路径 | `datasets/example.jsonl` |
-| `HF_ENDPOINT` | HuggingFace镜像 | `https://hf-mirror.com` |
+```json
+{
+  "instruction": "任务描述（必填）",
+  "input": "输入内容（可选）",
+  "output": "期望输出（必填）"
+}
+```
 
-### 自定义训练参数
+### 示例数据
 
-编辑 `smart_trainer.py` 中的 `TrainingConfig` 可自定义训练参数。
+```json
+{
+  "instruction": "介绍一下智核万炼AI平台",
+  "input": "",
+  "output": "智核万炼是一个开箱即用的AI模型微调训练平台，让每个人都能轻松训练自己的AI模型。"
+}
+
+{
+  "instruction": "翻译成英文",
+  "input": "今天天气真好",
+  "output": "The weather is so nice today."
+}
+```
+
+---
+
+## 🔧 安装说明
+
+### 环境要求
+
+- Python 3.8 或更高版本
+- 8GB+ 内存（推荐16GB+）
+- 10GB+ 可用磁盘空间
+- （可选）NVIDIA GPU + CUDA
+
+### 依赖安装
+
+```bash
+# 基础依赖
+pip install -r requirements.txt
+
+# （可选）GPU加速依赖
+pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118
+```
+
+---
+
+## 🎨 界面预览
+
+### 硬件监控界面
+
+- 实时显示CPU、内存、GPU使用情况
+- 硬件综合评分展示
+- 智能训练模式推荐
+- 美观的进度条和可视化
+
+### CLI 交互界面
+
+- 彩色输出，友好提示
+- 进度可视化
+- 错误处理和恢复
+
+---
+
+## 📈 训练流程
+
+1. **硬件检测** - 自动分析系统硬件资源
+2. **模式推荐** - 根据硬件推荐最佳训练配置
+3. **数据加载** - 自动加载和预处理训练数据
+4. **模型微调** - 使用QLoRA进行高效微调
+5. **资源监控** - 实时监控训练资源使用
+6. **报告生成** - 自动生成训练和硬件评估报告
+
+---
+
+## 🔌 开发指南
+
+### 扩展训练模式
+
+编辑 `hardware_monitor.py` 中的 `get_training_recommendations` 方法。
+
+### 自定义模型
+
+修改 `finetune.py` 中的模型加载代码。
+
+### 添加监控指标
+
+在 `hardware_monitor.py` 中扩展 `HardwareDetector` 类。
 
 ---
 
 ## 🤝 贡献指南
 
-欢迎提交Issue和Pull Request！
+欢迎参与智核万炼的开发！
 
 1. Fork 本仓库
 2. 创建特性分支 (`git checkout -b feature/AmazingFeature`)
@@ -235,20 +286,29 @@ python nexaforge.py --interactive
 
 ## 📄 许可证
 
-本项目基于 MIT 许可证开源 - 详见 [LICENSE](LICENSE) 文件
+本项目基于 MIT 许可证开源 - 详见 [LICENSE](LICENSE) 文件。
+
+---
+
+## 📞 联系方式
+
+- 项目主页：https://github.com/yourusername/nexaforge-ai
+- 问题反馈：https://github.com/yourusername/nexaforge-ai/issues
 
 ---
 
 ## 🙏 致谢
 
-- [Hugging Face](https://huggingface.co/) - 提供优秀的Transformer库
-- [PyTorch](https://pytorch.org/) - 深度学习框架
-- [PEFT](https://github.com/huggingface/peft) - 参数高效微调
-- [TRL](https://github.com/huggingface/trl) - Transformer强化学习
+感谢以下开源项目：
+
+- [Hugging Face Transformers](https://huggingface.co/transformers/)
+- [PyTorch](https://pytorch.org/)
+- [FastAPI](https://fastapi.tiangolo.com/)
+- [PEFT](https://github.com/huggingface/peft)
 
 ---
 
 <p align="center">
   <b>智核万炼® NexaForge AI</b><br>
-  让AI训练变得简单
+  让AI训练变得简单，人人都能训练自己的AI模型！
 </p>

@@ -26,6 +26,98 @@
 - 📊 **完整训练报告** - 自动生成详细的训练和硬件评估报告
 - 🎨 **友好用户界面** - 美观的Web监控界面和CLI操作体验
 - 🔌 **一键启动** - 真正的开箱即用，零配置开始训练
+- 🏭 **工业级健壮性** - 企业级监控、弹性机制和自动化测试
+
+---
+
+## 🛠️ 环境要求与安装
+
+### 系统要求
+
+| 组件 | 最低要求 | 推荐配置 |
+|------|---------|---------|
+| **操作系统** | Windows 10+ / Linux / macOS | Windows 11 / Ubuntu 22.04+ |
+| **Python** | 3.8+ | 3.10+ |
+| **内存** | 8 GB | 32 GB+ |
+| **存储** | 20 GB 可用空间 | 100 GB+ SSD |
+| **GPU** | 可选 | NVIDIA GPU 8 GB+ |
+
+### 依赖安装
+
+#### 方式一：使用 pip 安装核心依赖
+
+```bash
+# 安装核心依赖
+pip install fastapi uvicorn psutil pydantic pydantic-settings
+pip install cachetools tenacity python-dotenv
+
+# GPU 支持（可选）
+pip install nvidia-ml-py3 py3nvml torch
+
+# 前端依赖
+cd frontend
+npm install
+```
+
+#### 方式二：使用 requirements.txt
+
+```bash
+# 创建 requirements.txt（项目已包含）
+pip install -r requirements.txt
+```
+
+#### 方式三：使用 pyproject.toml（推荐）
+
+```bash
+# 安装项目（开发模式）
+pip install -e .
+
+# 或使用 pip-tools
+pip-compile pyproject.toml
+pip install -r requirements.txt
+```
+
+### 完整依赖列表
+
+```toml
+# 核心依赖
+fastapi>=0.100.0
+uvicorn>=0.23.0
+psutil>=7.2.2
+pydantic>=2.0.0
+pydantic-settings>=2.0.0
+
+# 监控和弹性
+cachetools>=5.3.0
+tenacity>=8.0.0
+prometheus-fastapi-instrumentator>=7.0.0
+
+# GPU 支持
+nvidia-ml-py3>=7.352.0
+py3nvml>=0.2.7
+torch>=2.0.0
+
+# Windows 特定
+pywin32>=311
+wmi>=1.5.1
+pythonnet>=3.0.5
+```
+
+### 验证安装
+
+```bash
+# 检查 Python 版本
+python --version
+
+# 测试核心模块
+python -c "from hardware import HardwareDetector; print('✅ 模块导入成功')"
+
+# 运行单元测试
+python -m pytest tests/test_hardware.py -v
+
+# 启动服务
+python hardware_server.py
+```
 
 ---
 

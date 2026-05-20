@@ -9,6 +9,7 @@ from prometheus_fastapi_instrumentator import Instrumentator, metrics
 from prometheus_fastapi_instrumentator.metrics import Info
 from fastapi import FastAPI, Request
 from fastapi.responses import Response
+from prometheus_client import Counter
 import time
 
 
@@ -54,29 +55,27 @@ def create_instrumentator() -> Instrumentator:
     return instrumentator
 
 
-def hardware_metrics() -> Info:
+def hardware_metrics():
     """自定义硬件监控指标"""
-
-    def instrumentation(info):
+    
+    METRIC = Counter(
+        "hardware_cpu_percent",
+        "CPU usage percentage",
+        namespace="nexaforge",
+        subsystem="hardware"
+    )
+    
+    def instrumentation(info) -> None:
         try:
             from hardware.detector import detector
-
+            
             # 添加硬件健康指标
             if hasattr(detector, 'last_snapshot'):
                 snapshot = detector.last_snapshot
                 if snapshot and isinstance(snapshot, dict):
                     cpu_percent = snapshot.get("cpu", {}).get("percent", 0)
-                    memory_percent = snapshot.get("memory", {}).get("percent", 0)
-
-                    info.labels(
-                        cpu_percent=cpu_percent,
-                        memory_percent=memory_percent
-                    )
+                    METRIC.labels(handler=info.modified_handler).inc(cpu_percent / 100)
         except Exception:
             pass
-
-    return Info(
-        "hardware_metrics",
-        "Hardware monitoring metrics",
-        instrumentation=instrumentation,
-    )
+    
+    return instrumentation

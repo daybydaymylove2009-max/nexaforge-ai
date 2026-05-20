@@ -27,10 +27,16 @@ from .models import (
 )
 
 from .detector import HardwareDetector
+from .compute_evaluator import ComputeEvaluator, GPUDatabase, ModelDatabase
+from .compute_routes import router as compute_router
 
-__version__ = "2.0.0"
+__version__ = "2.1.0"
 __all__ = [
     "HardwareDetector",
+    "ComputeEvaluator",
+    "GPUDatabase",
+    "ModelDatabase",
+    "compute_router",
     "APIResponse",
     "SystemInfo",
     "CPUInfo",

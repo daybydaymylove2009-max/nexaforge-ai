@@ -16,6 +16,7 @@ import uvicorn
 
 from hardware import detector
 from hardware.routes import router as api_router
+from hardware.compute_routes import router as compute_router
 from hardware.middleware import RateLimitMiddleware
 from hardware.config import settings
 from hardware.monitoring import create_instrumentator
@@ -41,6 +42,7 @@ if settings.ENABLE_RATE_LIMIT:
     app.add_middleware(RateLimitMiddleware)
 
 app.include_router(api_router, prefix=settings.API_PREFIX)
+app.include_router(compute_router, prefix=settings.API_PREFIX)
 
 instrumentator = create_instrumentator()
 instrumentator.instrument(app).expose(app, endpoint="/metrics")

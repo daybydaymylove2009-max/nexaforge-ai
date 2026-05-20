@@ -1,5 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useHardwareWebSocket } from './hooks/useHardwareWebSocket';
+import { useComputeEvaluation } from './hooks/useComputeEvaluation';
+import ComputeDashboard from './components/ComputeDashboard';
 import { Brain, Cpu, HardDrive, Monitor, Server, Activity, Thermometer, Zap, Layers, Share2, ShieldAlert, FileText, X, ShieldCheck } from 'lucide-react';
 
 const API_BASE = import.meta.env.VITE_API_BASE || 'http://localhost:8000';
@@ -519,6 +521,14 @@ const ReportModal = ({ show, onClose, data }) => {
 
 export default function App() {
   const { data, isConnected, error } = useHardwareWebSocket(API_BASE + '/ws');
+  const {
+    comprehensive,
+    gpuInfo,
+    models,
+    loading: computeLoading,
+    runBenchmark,
+    fetchAll: fetchComputeAll,
+  } = useComputeEvaluation();
   
   const [showReport, setShowReport] = useState(false);
   const [reportData, setReportData] = useState(null);
@@ -900,6 +910,18 @@ export default function App() {
           {/* Compute Ladder Card (Prominent Position) */}
           <div className="glass-panel hw-card animate-in" style={{ gridColumn: 'span 2', animationDelay: '0.8s' }}>
             <ComputeLadder data={snapshot.compute_ladder} />
+          </div>
+
+          {/* AI Compute Evaluation Dashboard */}
+          <div className="glass-panel hw-card animate-in" style={{ gridColumn: 'span 2', animationDelay: '0.9s' }}>
+            <ComputeDashboard
+              comprehensive={comprehensive}
+              gpuInfo={gpuInfo}
+              models={models}
+              loading={computeLoading}
+              runBenchmark={runBenchmark}
+              fetchAll={fetchComputeAll}
+            />
           </div>
 
         </div>

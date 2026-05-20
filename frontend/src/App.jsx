@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { useHardwareWebSocket } from './hooks/useHardwareWebSocket';
 import { Brain, Cpu, HardDrive, Monitor, Server, Activity, Thermometer, Zap, Layers, Share2, ShieldAlert, FileText, X, ShieldCheck } from 'lucide-react';
 
-const API_BASE = 'http://localhost:8000'; // Make sure this points to your backend
+const API_BASE = import.meta.env.VITE_API_BASE || 'http://localhost:8000';
 
 const locales = {
   en: {

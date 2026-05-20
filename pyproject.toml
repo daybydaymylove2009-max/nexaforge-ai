@@ -1,6 +1,6 @@
 [project]
 name = "nexaforge-ai"
-version = "1.0.0"
+version = "2.0.0"
 description = "智核万炼® NexaForge AI - 智能微调训练平台"
 authors = ["NexaForge AI Team <team@nexaforge.ai>"]
 readme = "README.md"
@@ -15,6 +15,10 @@ dependencies = [
     "pywin32>=311",
     "wmi>=1.5.1",
     "websockets>=13.1",
+    "pydantic>=2.0.0",
+    "pydantic-settings>=2.0.0",
+    "cachetools>=5.3.0",
+    "python-dotenv>=1.0.0",
 ]
 
 [project.scripts]

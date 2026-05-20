@@ -47,12 +47,19 @@
 #### 方式一：使用 pip 安装核心依赖
 
 ```bash
-# 安装核心依赖
+# 核心依赖
 pip install fastapi uvicorn psutil pydantic pydantic-settings
-pip install cachetools tenacity python-dotenv
+pip install cachetools tenacity python-dotenv websockets
+pip install prometheus-fastapi-instrumentator
 
-# GPU 支持（可选）
-pip install nvidia-ml-py3 py3nvml torch
+# GPU 支持（推荐）
+pip install nvidia-ml-py3 py3nvml
+
+# AI 框架（推荐）
+pip install torch torchaudio torchvision
+
+# Windows 特定依赖
+pip install pywin32 wmi pythonnet
 
 # 前端依赖
 cd frontend
@@ -83,22 +90,28 @@ pip install -r requirements.txt
 # 核心依赖
 fastapi>=0.100.0
 uvicorn>=0.23.0
-psutil>=7.2.2
+psutil>=5.9.0
 pydantic>=2.0.0
 pydantic-settings>=2.0.0
 
 # 监控和弹性
 cachetools>=5.3.0
 tenacity>=8.0.0
+python-dotenv>=1.0.0
 prometheus-fastapi-instrumentator>=7.0.0
+websockets>=13.1
 
 # GPU 支持
 nvidia-ml-py3>=7.352.0
 py3nvml>=0.2.7
+
+# AI 框架
 torch>=2.0.0
+torchaudio>=2.0.0
+torchvision>=0.15.0
 
 # Windows 特定
-pywin32>=311
+pywin32>=306
 wmi>=1.5.1
 pythonnet>=3.0.5
 ```
@@ -314,8 +327,11 @@ ws://localhost:8000/ws
 # 基础依赖
 pip install -r requirements.txt
 
-# （可选）GPU加速依赖
-pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118
+# AI 框架（CPU版本）
+pip install torch torchaudio torchvision
+
+# AI 框架（CUDA版本，推荐有NVIDIA GPU的用户）
+pip install torch torchaudio torchvision --index-url https://download.pytorch.org/whl/cu126
 ```
 
 ---
@@ -394,7 +410,7 @@ pip install torch torchvision torchaudio --index-url https://download.pytorch.or
 感谢以下开源项目：
 
 - [Hugging Face Transformers](https://huggingface.co/transformers/)
-- [PyTorch](https://pytorch.org/)
+- [torch (PyTorch)](https://pytorch.org/)
 - [FastAPI](https://fastapi.tiangolo.com/)
 - [PEFT](https://github.com/huggingface/peft)
 

@@ -1,7 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 
 const API_BASE = import.meta.env.VITE_API_BASE || 'http://localhost:8000';
-const API_KEY = 'NEXA-PRO-2026';
 
 export function useComputeEvaluation() {
   const [comprehensive, setComprehensive] = useState(null);
@@ -10,9 +9,11 @@ export function useComputeEvaluation() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
+  const computeBase = `${API_BASE}/api/v1/compute`;
+
   const fetchComprehensive = useCallback(async () => {
     try {
-      const res = await fetch(`${API_BASE}/api/compute/evaluation/comprehensive?api_key=${API_KEY}`);
+      const res = await fetch(`${computeBase}/evaluation/comprehensive`);
       const json = await res.json();
       if (json.code === 200) {
         setComprehensive(json.data);
@@ -20,11 +21,11 @@ export function useComputeEvaluation() {
     } catch (err) {
       console.error('Fetch comprehensive evaluation failed:', err);
     }
-  }, []);
+  }, [computeBase]);
 
   const fetchGpuInfo = useCallback(async () => {
     try {
-      const res = await fetch(`${API_BASE}/api/compute/gpu/info?api_key=${API_KEY}`);
+      const res = await fetch(`${computeBase}/gpu/info`);
       const json = await res.json();
       if (json.code === 200) {
         setGpuInfo(json.data);
@@ -32,11 +33,11 @@ export function useComputeEvaluation() {
     } catch (err) {
       console.error('Fetch GPU info failed:', err);
     }
-  }, []);
+  }, [computeBase]);
 
   const fetchModels = useCallback(async () => {
     try {
-      const res = await fetch(`${API_BASE}/api/compute/models?api_key=${API_KEY}`);
+      const res = await fetch(`${computeBase}/models`);
       const json = await res.json();
       if (json.code === 200) {
         setModels(json.data);
@@ -44,12 +45,12 @@ export function useComputeEvaluation() {
     } catch (err) {
       console.error('Fetch models failed:', err);
     }
-  }, []);
+  }, [computeBase]);
 
   const runBenchmark = useCallback(async (duration = 5) => {
     setLoading(true);
     try {
-      const res = await fetch(`${API_BASE}/api/compute/gpu/benchmark?duration=${duration}&api_key=${API_KEY}`);
+      const res = await fetch(`${computeBase}/gpu/benchmark?duration=${duration}`);
       const json = await res.json();
       setLoading(false);
       if (json.code === 200) {
@@ -62,11 +63,11 @@ export function useComputeEvaluation() {
       setError(err.message);
       throw err;
     }
-  }, [fetchComprehensive]);
+  }, [computeBase, fetchComprehensive]);
 
   const fetchPretraining = useCallback(async (datasetTokens = 100_000_000_000) => {
     try {
-      const res = await fetch(`${API_BASE}/api/compute/pretraining?dataset_tokens=${datasetTokens}&api_key=${API_KEY}`);
+      const res = await fetch(`${computeBase}/pretraining?dataset_tokens=${datasetTokens}`);
       const json = await res.json();
       if (json.code === 200) {
         return json.data;
@@ -75,11 +76,11 @@ export function useComputeEvaluation() {
       console.error('Fetch pretraining capability failed:', err);
     }
     return null;
-  }, []);
+  }, [computeBase]);
 
   const fetchFinetuning = useCallback(async () => {
     try {
-      const res = await fetch(`${API_BASE}/api/compute/finetuning?api_key=${API_KEY}`);
+      const res = await fetch(`${computeBase}/finetuning`);
       const json = await res.json();
       if (json.code === 200) {
         return json.data;
@@ -88,11 +89,11 @@ export function useComputeEvaluation() {
       console.error('Fetch finetuning capability failed:', err);
     }
     return null;
-  }, []);
+  }, [computeBase]);
 
   const fetchSelfImprovement = useCallback(async () => {
     try {
-      const res = await fetch(`${API_BASE}/api/compute/self-improvement?api_key=${API_KEY}`);
+      const res = await fetch(`${computeBase}/self-improvement`);
       const json = await res.json();
       if (json.code === 200) {
         return json.data;
@@ -101,7 +102,7 @@ export function useComputeEvaluation() {
       console.error('Fetch self-improvement capability failed:', err);
     }
     return null;
-  }, []);
+  }, [computeBase]);
 
   const fetchAll = useCallback(async () => {
     await Promise.all([fetchComprehensive(), fetchGpuInfo(), fetchModels()]);

@@ -26,12 +26,13 @@ from .models import (
     EnterpriseReport,
 )
 
-from .detector import HardwareDetector
+from .detector import HardwareDetector, detector
 from .compute_evaluator import ComputeEvaluator, GPUDatabase, ModelDatabase
 from .compute_routes import router as compute_router
 
 __version__ = "2.1.0"
 __all__ = [
+    "detector",
     "HardwareDetector",
     "ComputeEvaluator",
     "GPUDatabase",

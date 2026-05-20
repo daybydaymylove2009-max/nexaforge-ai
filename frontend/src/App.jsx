@@ -274,43 +274,147 @@ const InfoItem = React.memo(({ label, value, highlight }) => (
 
 const ComputeLadder = ({ data }) => {
   if (!data || data.length === 0) return null;
-  
-  return (
-    <div style={{ marginTop: '24px', padding: '20px', background: 'rgba(0,0,0,0.2)', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.05)' }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '20px' }}>
-        <Activity size={18} color="var(--primary-neon)" />
-        <h3 style={{ fontSize: '0.9rem', color: 'var(--text-muted)', textTransform: 'uppercase', margin: 0 }}>
-          {t('computeLadderTitle')}
-        </h3>
+
+  const maxScore = Math.max(...data.map(d => d.score));
+  const currentIdx = data.findIndex(d => d.is_current);
+  const currentRank = currentIdx >= 0 ? currentIdx + 1 : data.length;
+  const total = data.length;
+
+  const enterprise = data.filter(d => d.tier === 'Enterprise');
+  const consumer = data.filter(d => d.tier !== 'Enterprise' && !d.is_current);
+  const current = data.find(d => d.is_current);
+
+  const renderItem = (item) => {
+    const pct = (item.score / maxScore) * 100;
+    const isEnt = item.tier === 'Enterprise';
+    const isCur = item.is_current;
+
+    let barBg = 'rgba(255,255,255,0.12)';
+    let nameColor = '#ccc';
+    let borderColor = 'transparent';
+    if (isEnt) {
+      barBg = 'linear-gradient(90deg, #c9952e, #f5d67b)';
+      nameColor = '#f5d67b';
+      borderColor = 'rgba(201,149,46,0.25)';
+    }
+    if (isCur) {
+      barBg = 'linear-gradient(90deg, #00f0ff, #7b61ff)';
+      nameColor = '#00f0ff';
+      borderColor = 'rgba(0,240,255,0.35)';
+    }
+
+    return (
+      <div key={item.name} style={{
+        display: 'flex',
+        alignItems: 'center',
+        gap: '6px',
+        padding: '3px 6px',
+        borderRadius: '3px',
+        border: `1px solid ${borderColor}`,
+        background: isCur ? 'rgba(0,240,255,0.06)' : 'transparent',
+        boxShadow: isCur ? '0 0 8px rgba(0,240,255,0.15)' : 'none',
+      }}>
+        <span style={{
+          fontSize: '0.65rem',
+          color: nameColor,
+          fontWeight: isCur ? 700 : isEnt ? 600 : 400,
+          whiteSpace: 'nowrap',
+          minWidth: '0',
+          overflow: 'hidden',
+          textOverflow: 'ellipsis',
+          flexShrink: 0,
+          maxWidth: '120px',
+        }}>
+          {isCur ? '▸ ' : ''}{item.name}
+        </span>
+        <div style={{ flex: 1, position: 'relative', height: '3px', background: 'rgba(255,255,255,0.04)', borderRadius: '1.5px', overflow: 'visible' }}>
+          <div style={{
+            height: '100%',
+            width: `${pct}%`,
+            background: barBg,
+            borderRadius: '1.5px',
+            boxShadow: isCur ? '0 0 6px rgba(0,240,255,0.5)' : isEnt ? '0 0 4px rgba(201,149,46,0.3)' : 'none',
+          }} />
+          <span style={{
+            position: 'absolute',
+            right: 0,
+            top: '50%',
+            transform: 'translate(calc(100% + 4px), -50%)',
+            fontSize: '0.55rem',
+            color: isCur ? '#00f0ff' : isEnt ? '#c9952e' : '#888',
+            fontWeight: isCur ? 700 : 500,
+            whiteSpace: 'nowrap',
+          }}>
+            {item.score}
+          </span>
+        </div>
+        {isCur && (
+          <span style={{
+            fontSize: '0.5rem',
+            color: '#00f0ff',
+            background: 'rgba(0,240,255,0.12)',
+            padding: '1px 4px',
+            borderRadius: '2px',
+            flexShrink: 0,
+            letterSpacing: '0.5px',
+          }}>
+            当前
+          </span>
+        )}
       </div>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-        {data.map((item, idx) => (
-          <div key={idx} style={{ position: 'relative' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px', fontSize: '0.75rem' }}>
-              <span style={{ 
-                color: item.is_current ? 'var(--primary-neon)' : '#fff', 
-                fontWeight: item.is_current ? '800' : '400',
-                letterSpacing: item.is_current ? '0.5px' : 'normal'
-              }}>
-                {item.name} {item.is_current && ' [YOU]'}
-              </span>
-              <span style={{ color: item.is_current ? 'var(--primary-neon)' : 'var(--text-muted)' }}>{item.score}%</span>
-            </div>
-            <div style={{ height: '6px', background: 'rgba(255,255,255,0.05)', borderRadius: '3px', overflow: 'hidden' }}>
-              <div 
-                style={{ 
-                  height: '100%', 
-                  width: `${item.display_percent || item.score}%`, 
-                  background: item.is_current 
-                    ? 'linear-gradient(90deg, var(--primary-neon), #b347ff)' 
-                    : item.tier === 'Enterprise' ? 'rgba(255,255,255,0.2)' : 'rgba(255,255,255,0.1)',
-                  boxShadow: item.is_current ? '0 0 15px rgba(0, 240, 255, 0.4)' : 'none',
-                  borderRadius: '3px'
-                }} 
-              />
-            </div>
+    );
+  };
+
+  return (
+    <div style={{
+      marginTop: '24px',
+      padding: '14px 16px',
+      background: 'rgba(0,0,0,0.25)',
+      borderRadius: '10px',
+      border: '1px solid rgba(255,255,255,0.05)',
+      maxHeight: '300px',
+      overflow: 'hidden',
+    }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '10px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <Activity size={15} color="var(--primary-neon)" />
+          <div>
+            <div style={{ fontSize: '0.82rem', color: '#fff', fontWeight: 700, lineHeight: 1.2 }}>业界算力对比阶梯</div>
+            <div style={{ fontSize: '0.6rem', color: '#666', lineHeight: 1.3 }}>以 H100 为基准</div>
           </div>
-        ))}
+        </div>
+        <div style={{
+          fontSize: '0.68rem',
+          color: '#00f0ff',
+          background: 'rgba(0,240,255,0.08)',
+          padding: '3px 10px',
+          borderRadius: '4px',
+          border: '1px solid rgba(0,240,255,0.15)',
+          fontWeight: 600,
+          whiteSpace: 'nowrap',
+        }}>
+          当前排名 #{currentRank}/{total}
+        </div>
+      </div>
+
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px 16px' }}>
+        <div>
+          <div style={{ fontSize: '0.55rem', color: '#c9952e', fontWeight: 600, marginBottom: '4px', letterSpacing: '1px', textTransform: 'uppercase' }}>
+            企业级
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+            {enterprise.map(renderItem)}
+          </div>
+        </div>
+        <div>
+          <div style={{ fontSize: '0.55rem', color: '#999', fontWeight: 600, marginBottom: '4px', letterSpacing: '1px', textTransform: 'uppercase' }}>
+            消费级 / 当前设备
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+            {consumer.map(renderItem)}
+            {current && renderItem(current)}
+          </div>
+        </div>
       </div>
     </div>
   );
@@ -523,7 +627,7 @@ export default function App() {
   const { data, isConnected, error } = useHardwareWebSocket(API_BASE + '/ws');
   const {
     comprehensive,
-    gpuInfo,
+    gpuInfo: computeGpuInfo,
     models,
     loading: computeLoading,
     runBenchmark,
@@ -644,7 +748,7 @@ export default function App() {
             </p>
           </div>
 
-          <div className="glass-panel hw-card animate-in" style={{ gridColumn: 'span 2', padding: '24px' }}>
+          <div className="glass-panel hw-card animate-in" style={{ padding: '24px' }}>
             <TrendChart data={historyData} />
           </div>
 
@@ -655,7 +759,7 @@ export default function App() {
             <div className="info-list">
               <InfoItem label={t('os')} value={sys.os_display || sys.os} />
               <InfoItem label={t('arch')} value={sys.architecture} />
-              <InfoItem label={t('uptime')} value={formatUptime(sys.uptime)} highlight />
+              <InfoItem label={t('uptime')} value={formatUptime(snapshot.uptime_seconds)} highlight />
               <InfoItem label="Python" value={sys.python_version} />
             </div>
           </div>
@@ -907,8 +1011,8 @@ export default function App() {
             </button>
           </div>
 
-          {/* Compute Ladder Card (Prominent Position) */}
-          <div className="glass-panel hw-card animate-in" style={{ gridColumn: 'span 2', animationDelay: '0.8s' }}>
+          {/* Compute Ladder Card */}
+          <div className="glass-panel hw-card animate-in" style={{ animationDelay: '0.8s' }}>
             <ComputeLadder data={snapshot.compute_ladder} />
           </div>
 
@@ -916,7 +1020,7 @@ export default function App() {
           <div className="glass-panel hw-card animate-in" style={{ gridColumn: 'span 2', animationDelay: '0.9s' }}>
             <ComputeDashboard
               comprehensive={comprehensive}
-              gpuInfo={gpuInfo}
+              gpuInfo={computeGpuInfo}
               models={models}
               loading={computeLoading}
               runBenchmark={runBenchmark}

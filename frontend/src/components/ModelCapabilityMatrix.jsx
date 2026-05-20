@@ -7,13 +7,13 @@ const ModelCapabilityMatrix = ({ comprehensive, models }) => {
   const [searchTerm, setSearchTerm] = useState('');
 
   const sizeCategories = {
-    'all': 'All Sizes',
-    'micro': 'Micro (< 1B)',
-    'small': 'Small (1-3B)',
-    'medium': 'Medium (3-7B)',
-    'large': 'Large (7-13B)',
-    'xlarge': 'Extra Large (13-70B)',
-    'super': 'Super (70B+)'
+    'all': '全部大小',
+    'micro': '微型 (< 1B)',
+    'small': '小型 (1-3B)',
+    'medium': '中型 (3-7B)',
+    'large': '大型 (7-13B)',
+    'xlarge': '超大 (13-70B)',
+    'super': '超级 (70B+)'
   };
 
   const getSizeCategory = (paramsB) => {
@@ -54,12 +54,12 @@ const ModelCapabilityMatrix = ({ comprehensive, models }) => {
 
   const getCapabilityStatus = (model) => {
     const capable = capableModels.find(m => m.model_name === model.name);
-    if (!capable) return { status: 'unable', text: 'Unable', color: 'var(--danger-neon)' };
+    if (!capable) return { status: 'unable', text: '不可行', color: 'var(--danger-neon)' };
     
-    if (capable.estimated_days < 1) return { status: 'fast', text: '< 1 day', color: 'var(--success-neon)' };
-    if (capable.estimated_days < 7) return { status: 'good', text: `${capable.estimated_days}d`, color: 'var(--primary-neon)' };
-    if (capable.estimated_days < 30) return { status: 'moderate', text: `${capable.estimated_days}d`, color: 'var(--warning-neon)' };
-    return { status: 'slow', text: `${capable.estimated_days}d+`, color: 'var(--text-muted)' };
+    if (capable.estimated_days < 1) return { status: 'fast', text: '< 1天', color: 'var(--success-neon)' };
+    if (capable.estimated_days < 7) return { status: 'good', text: `${capable.estimated_days}天`, color: 'var(--primary-neon)' };
+    if (capable.estimated_days < 30) return { status: 'moderate', text: `${capable.estimated_days}天`, color: 'var(--warning-neon)' };
+    return { status: 'slow', text: `${capable.estimated_days}天+`, color: 'var(--text-muted)' };
   };
 
   const getVRAMStatus = (required, available) => {
@@ -71,7 +71,7 @@ const ModelCapabilityMatrix = ({ comprehensive, models }) => {
   if (!models) {
     return (
       <div style={{ height: '400px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-muted)' }}>
-        Loading model database...
+        正在加载模型数据库...
       </div>
     );
   }
@@ -82,9 +82,9 @@ const ModelCapabilityMatrix = ({ comprehensive, models }) => {
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
           <Layers size={20} color="var(--primary-neon)" />
           <div>
-            <h3 style={{ margin: 0, fontSize: '1rem', color: '#fff' }}>Model Training Capability Matrix</h3>
+            <h3 style={{ margin: 0, fontSize: '1rem', color: '#fff' }}>模型训练能力矩阵</h3>
             <p style={{ margin: '4px 0 0', fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-              {models.total_models} Models Supported | 0.5B - 140B Parameter Range
+              已收录 {models.total_models} 个模型 | 参数范围 0.5B - 140B
             </p>
           </div>
         </div>
@@ -95,7 +95,7 @@ const ModelCapabilityMatrix = ({ comprehensive, models }) => {
           <Search size={14} style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
           <input
             type="text"
-            placeholder="Search models..."
+            placeholder="搜索模型..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             style={{
@@ -142,12 +142,12 @@ const ModelCapabilityMatrix = ({ comprehensive, models }) => {
             cursor: 'pointer'
           }}
         >
-          <option value="all" style={{ background: '#1a1a2e' }}>All Providers</option>
+          <option value="all" style={{ background: '#1a1a2e' }}>全部厂商</option>
           <option value="Meta" style={{ background: '#1a1a2e' }}>Meta (Llama)</option>
           <option value="Mistral" style={{ background: '#1a1a2e' }}>Mistral AI</option>
-          <option value="Qwen" style={{ background: '#1a1a2e' }}>Qwen (Alibaba)</option>
+          <option value="Qwen" style={{ background: '#1a1a2e' }}>Qwen (阿里)</option>
           <option value="Google" style={{ background: '#1a1a2e' }}>Google (Gemma)</option>
-          <option value="Microsoft" style={{ background: '#1a1a2e' }}>Microsoft (Phi)</option>
+          <option value="Microsoft" style={{ background: '#1a1a2e' }}>微软 (Phi)</option>
           <option value="Stability" style={{ background: '#1a1a2e' }}>Stability AI</option>
         </select>
       </div>
@@ -166,7 +166,7 @@ const ModelCapabilityMatrix = ({ comprehensive, models }) => {
             padding: '12px',
             textAlign: 'center'
           }}>
-            <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', marginBottom: '4px' }}>Your GPU Power</div>
+            <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', marginBottom: '4px' }}>当前GPU算力</div>
             <div style={{ fontSize: '1.2rem', color: 'var(--primary-neon)', fontWeight: 'bold' }}>
               {pretraining.gpu_tflops_fp16} TFLOPS
             </div>
@@ -178,9 +178,9 @@ const ModelCapabilityMatrix = ({ comprehensive, models }) => {
             padding: '12px',
             textAlign: 'center'
           }}>
-            <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', marginBottom: '4px' }}>Pretraining Capable</div>
+            <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', marginBottom: '4px' }}>可预训练模型</div>
             <div style={{ fontSize: '1.2rem', color: 'var(--success-neon)', fontWeight: 'bold' }}>
-              {capableModels.length} Models
+              {capableModels.length} 个
             </div>
           </div>
           <div style={{
@@ -190,9 +190,9 @@ const ModelCapabilityMatrix = ({ comprehensive, models }) => {
             padding: '12px',
             textAlign: 'center'
           }}>
-            <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', marginBottom: '4px' }}>Finetuning Range</div>
+            <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', marginBottom: '4px' }}>微调范围</div>
             <div style={{ fontSize: '1.2rem', color: 'var(--purple-neon)', fontWeight: 'bold' }}>
-              {finetuning.max_finetune_params || 0}B Max
+              最大 {finetuning.max_finetune_params || 0}B
             </div>
           </div>
         </div>
@@ -207,12 +207,12 @@ const ModelCapabilityMatrix = ({ comprehensive, models }) => {
         <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.8rem' }}>
           <thead style={{ position: 'sticky', top: 0, background: 'rgba(26, 26, 46, 0.95)', zIndex: 1 }}>
             <tr style={{ borderBottom: '1px solid rgba(255, 255, 255, 0.1)' }}>
-              <th style={{ padding: '12px', textAlign: 'left', color: 'var(--text-muted)', fontWeight: '600' }}>Model</th>
-              <th style={{ padding: '12px', textAlign: 'center', color: 'var(--text-muted)', fontWeight: '600' }}>Params</th>
+              <th style={{ padding: '12px', textAlign: 'left', color: 'var(--text-muted)', fontWeight: '600' }}>模型</th>
+              <th style={{ padding: '12px', textAlign: 'center', color: 'var(--text-muted)', fontWeight: '600' }}>参数量</th>
               <th style={{ padding: '12px', textAlign: 'center', color: 'var(--text-muted)', fontWeight: '600' }}>QLoRA</th>
               <th style={{ padding: '12px', textAlign: 'center', color: 'var(--text-muted)', fontWeight: '600' }}>LoRA</th>
-              <th style={{ padding: '12px', textAlign: 'center', color: 'var(--text-muted)', fontWeight: '600' }}>Full FT</th>
-              <th style={{ padding: '12px', textAlign: 'center', color: 'var(--text-muted)', fontWeight: '600' }}>Pretrain</th>
+              <th style={{ padding: '12px', textAlign: 'center', color: 'var(--text-muted)', fontWeight: '600' }}>全参微调</th>
+              <th style={{ padding: '12px', textAlign: 'center', color: 'var(--text-muted)', fontWeight: '600' }}>预训练</th>
             </tr>
           </thead>
           <tbody>
@@ -267,7 +267,7 @@ const ModelCapabilityMatrix = ({ comprehensive, models }) => {
       </div>
 
       <div style={{ marginTop: '12px', fontSize: '0.75rem', color: 'var(--text-muted)', textAlign: 'center' }}>
-        Showing {filteredModels.length} of {models.total_models} models
+        显示 {filteredModels.length} / {models.total_models} 个模型
       </div>
     </div>
   );

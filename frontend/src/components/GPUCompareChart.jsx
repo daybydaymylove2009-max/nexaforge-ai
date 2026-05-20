@@ -39,7 +39,7 @@ const GPUCompareChart = ({ gpuInfo, gpuInfo: { gpu_name, tflops_fp16, rankings }
   if (!gpuInfo) {
     return (
       <div style={{ height: '400px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-muted)' }}>
-        Loading GPU comparison data...
+        正在加载GPU对比数据...
       </div>
     );
   }
@@ -50,14 +50,14 @@ const GPUCompareChart = ({ gpuInfo, gpuInfo: { gpu_name, tflops_fp16, rankings }
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
           <Activity size={20} color="var(--primary-neon)" />
           <div>
-            <h3 style={{ margin: 0, fontSize: '1rem', color: '#fff' }}>GPU Performance Ranking</h3>
+            <h3 style={{ margin: 0, fontSize: '1rem', color: '#fff' }}>GPU性能排行榜</h3>
             <p style={{ margin: '4px 0 0', fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-              Top {sortedGPUs.length} GPUs Compared to Your System
+              前 {sortedGPUs.length} 款GPU与当前系统对比
             </p>
           </div>
         </div>
         <div style={{ textAlign: 'right' }}>
-          <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', marginBottom: '4px' }}>Your GPU</div>
+          <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', marginBottom: '4px' }}>当前GPU</div>
           <div style={{ fontSize: '1.1rem', color: 'var(--primary-neon)', fontWeight: 'bold' }}>
             {tflops_fp16} TFLOPS
           </div>
@@ -81,14 +81,14 @@ const GPUCompareChart = ({ gpuInfo, gpuInfo: { gpu_name, tflops_fp16, rankings }
               {gpu_name}
             </div>
             <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-              Ranks #{currentIndex + 1} of {sortedGPUs.length} GPUs ({percentile}th percentile)
+              排名 #{currentIndex + 1} / {sortedGPUs.length} (前 {percentile}%)
             </div>
           </div>
           <div style={{ marginLeft: 'auto', textAlign: 'right' }}>
             <div style={{ fontSize: '1.5rem', color: 'var(--primary-neon)', fontWeight: 'bold' }}>
               {percentile}%
             </div>
-            <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>Top</div>
+            <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>领先比例</div>
           </div>
         </div>
       )}
@@ -125,7 +125,7 @@ const GPUCompareChart = ({ gpuInfo, gpuInfo: { gpu_name, tflops_fp16, rankings }
                     fontWeight: isCurrent ? 'bold' : '400'
                   }}>
                     {gpu.name}
-                    {isCurrent && <span style={{ marginLeft: '8px', fontSize: '0.65rem', color: 'var(--primary-neon)' }}>[YOU]</span>}
+                    {isCurrent && <span style={{ marginLeft: '8px', fontSize: '0.65rem', color: 'var(--primary-neon)' }}>[当前]</span>}
                   </span>
                 </div>
                 <div style={{ display: 'flex', gap: '16px', fontSize: '0.75rem' }}>
@@ -164,10 +164,10 @@ const GPUCompareChart = ({ gpuInfo, gpuInfo: { gpu_name, tflops_fp16, rankings }
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '8px' }}>
           <Cpu size={14} color="var(--text-muted)" />
-          <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>GPU Architecture</span>
+          <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>GPU架构</span>
         </div>
         <div style={{ fontSize: '0.85rem', color: '#fff' }}>
-          {gpuInfo.gpu_info?.architecture || 'Unknown'} | Bandwidth: {gpuInfo.gpu_info?.bandwidth_gb_s || '--'} GB/s
+          {gpuInfo.gpu_info?.architecture || '未知'} | 带宽: {gpuInfo.gpu_info?.bandwidth_gb_s || '--'} GB/s
         </div>
       </div>
     </div>

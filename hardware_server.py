@@ -76,13 +76,24 @@ manager = ConnectionManager()
 @app.get("/api/snapshot")
 async def get_snapshot_legacy():
     """获取硬件快照 (兼容旧版本)"""
-    snapshot = await asyncio.to_thread(detector.get_hardware_snapshot)
-    recommendations = await asyncio.to_thread(detector.get_training_recommendations, snapshot)
-    detector.last_snapshot = snapshot
-    return {
-        "snapshot": snapshot,
-        "recommendations": recommendations
-    }
+    try:
+        snapshot = await asyncio.to_thread(detector.get_hardware_snapshot)
+        detector.last_snapshot = snapshot
+        recommendations = await asyncio.to_thread(detector.get_training_recommendations, snapshot)
+        return {
+            "snapshot": snapshot,
+            "recommendations": recommendations
+        }
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return JSONResponse(
+            status_code=500,
+            content={
+                "error": "Failed to get hardware snapshot",
+                "detail": str(e)
+            }
+        )
 
 
 @app.get("/api/recommendations")
@@ -97,6 +108,42 @@ async def get_recommendations_legacy():
 async def get_history_legacy():
     """获取历史数据 (兼容旧版本)"""
     return detector.get_history()
+
+
+@app.get("/api/stats/history")
+async def get_stats_history():
+    """获取统计历史数据 (趋势图用)"""
+    history = detector.get_history()
+    if not history:
+        return []
+    stats = []
+    for h in history:
+        try:
+            snap = h.get("snapshot", h)
+            cpu_data = snap.get("cpu", {})
+            mem_data = snap.get("memory", {})
+            gpu_data = snap.get("gpu", {})
+            temp_data = snap.get("temperature", {})
+            stats.append({
+                "timestamp": snap.get("timestamp", ""),
+                "cpu": cpu_data.get("percent", 0),
+                "memory": mem_data.get("percent", 0),
+                "gpu": gpu_data.get("devices", [{}])[0].get("utilization", 0) if gpu_data.get("devices") else 0,
+                "score": snap.get("score", 0),
+                "cpu_temp": temp_data.get("cpu_temp", 0),
+                "gpu_temp": temp_data.get("gpu_temp", 0),
+                "vram": gpu_data.get("devices", [{}])[0].get("memory_percent", 0) if gpu_data.get("devices") else 0,
+            })
+        except Exception:
+            continue
+    return stats
+
+
+@app.get("/api/report/enterprise")
+async def get_enterprise_report_legacy():
+    """生成企业级评估报告 (兼容旧版本)"""
+    report = await asyncio.to_thread(detector.generate_enterprise_report)
+    return report
 
 
 @app.websocket("/ws")

@@ -19,13 +19,13 @@ const SelfImprovementAssessment = ({ comprehensive, fetchSelfImprovement }) => {
   }, [fetchSelfImprovement, details]);
 
   const capabilityLevels = [
-    { id: 'inference', label: 'Inference Only', tier: 1, color: 'var(--text-muted)' },
-    { id: 'qlora', label: 'QLoRA Finetuning', tier: 2, color: 'var(--warning-neon)' },
-    { id: 'lora', label: 'LoRA Finetuning', tier: 3, color: 'var(--primary-neon)' },
-    { id: 'full_ft', label: 'Full Fine-tuning', tier: 4, color: '#b347ff' },
-    { id: 'rlhf', label: 'RLHF Training', tier: 5, color: '#ff6b6b' },
-    { id: 'distillation', label: 'Knowledge Distillation', tier: 6, color: '#ffd93d' },
-    { id: 'self_improve', label: 'Self-Improvement', tier: 7, color: 'var(--success-neon)' },
+    { id: 'inference', label: '仅推理', tier: 1, color: 'var(--text-muted)' },
+    { id: 'qlora', label: 'QLoRA微调', tier: 2, color: 'var(--warning-neon)' },
+    { id: 'lora', label: 'LoRA微调', tier: 3, color: 'var(--primary-neon)' },
+    { id: 'full_ft', label: '全参微调', tier: 4, color: '#b347ff' },
+    { id: 'rlhf', label: 'RLHF训练', tier: 5, color: '#ff6b6b' },
+    { id: 'distillation', label: '知识蒸馏', tier: 6, color: '#ffd93d' },
+    { id: 'self_improve', label: '自进化', tier: 7, color: 'var(--success-neon)' },
   ];
 
   const getCurrentTier = () => {
@@ -39,53 +39,53 @@ const SelfImprovementAssessment = ({ comprehensive, fetchSelfImprovement }) => {
   const evolutionRoadmap = [
     {
       phase: 1,
-      name: 'Inference Phase',
-      description: 'Deploy pre-trained models for inference',
-      requirements: 'Low VRAM, No training required',
+      name: '推理阶段',
+      description: '部署预训练模型进行推理',
+      requirements: '低显存，无需训练',
       achievable: true,
       icon: '🎯'
     },
     {
       phase: 2,
-      name: 'QLoRA Finetuning',
-      description: 'Efficient fine-tuning with 4-bit quantization',
-      requirements: `${finetuning.max_qlora_params || 0}B params, ${finetuning.qlora_vram_estimate || 0}GB VRAM`,
+      name: 'QLoRA微调',
+      description: '4-bit量化高效微调',
+      requirements: `${finetuning.max_qlora_params || 0}B参数, ${finetuning.qlora_vram_estimate || 0}GB显存`,
       achievable: currentTier >= 2,
       icon: '⚡'
     },
     {
       phase: 3,
-      name: 'RLHF Training',
-      description: 'Reinforcement Learning from Human Feedback',
-      requirements: `${assessment.rlhf_vram_estimate || 0}GB VRAM, ${assessment.rlhf_batch_size || 0} batch size`,
+      name: 'RLHF训练',
+      description: '基于人类反馈的强化学习',
+      requirements: `${assessment.rlhf_vram_estimate || 0}GB显存, 批次${assessment.rlhf_batch_size || 0}`,
       achievable: currentTier >= 5,
       icon: '🧠'
     },
     {
       phase: 4,
-      name: 'Self-Improvement',
-      description: 'Model generates and learns from its own data',
-      requirements: `${assessment.self_improve_vram_estimate || 0}GB VRAM, Multi-GPU recommended`,
+      name: '自进化',
+      description: '模型自主生成数据并学习优化',
+      requirements: `${assessment.self_improve_vram_estimate || 0}GB显存, 建议多GPU`,
       achievable: currentTier >= 7,
       icon: '🚀'
     }
   ];
 
   const skillMatrix = [
-    { skill: 'Text Generation', level: currentTier >= 1 ? 100 : 0, max: 100 },
-    { skill: 'Code Generation', level: currentTier >= 1 ? 85 : 0, max: 100 },
-    { skill: 'Math Reasoning', level: currentTier >= 2 ? 70 : 0, max: 100 },
-    { skill: 'Instruction Following', level: currentTier >= 2 ? 80 : 0, max: 100 },
-    { skill: 'Multimodal Understanding', level: currentTier >= 3 ? 60 : 0, max: 100 },
-    { skill: 'Long Context', level: currentTier >= 3 ? 75 : 0, max: 100 },
-    { skill: 'Self-Correction', level: currentTier >= 5 ? 50 : 0, max: 100 },
-    { skill: 'Abstract Reasoning', level: currentTier >= 6 ? 40 : 0, max: 100 },
+    { skill: '文本生成', level: currentTier >= 1 ? 100 : 0, max: 100 },
+    { skill: '代码生成', level: currentTier >= 1 ? 85 : 0, max: 100 },
+    { skill: '数学推理', level: currentTier >= 2 ? 70 : 0, max: 100 },
+    { skill: '指令遵循', level: currentTier >= 2 ? 80 : 0, max: 100 },
+    { skill: '多模态理解', level: currentTier >= 3 ? 60 : 0, max: 100 },
+    { skill: '长上下文', level: currentTier >= 3 ? 75 : 0, max: 100 },
+    { skill: '自我纠错', level: currentTier >= 5 ? 50 : 0, max: 100 },
+    { skill: '抽象推理', level: currentTier >= 6 ? 40 : 0, max: 100 },
   ];
 
   if (loading) {
     return (
       <div style={{ height: '400px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-muted)' }}>
-        Analyzing evolution capabilities...
+        正在分析进化能力...
       </div>
     );
   }
@@ -95,9 +95,9 @@ const SelfImprovementAssessment = ({ comprehensive, fetchSelfImprovement }) => {
       <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '24px' }}>
         <Brain size={20} color="var(--primary-neon)" />
         <div>
-          <h3 style={{ margin: 0, fontSize: '1rem', color: '#fff' }}>Self-Evolution Capability Assessment</h3>
+          <h3 style={{ margin: 0, fontSize: '1rem', color: '#fff' }}>自进化能力评估</h3>
           <p style={{ margin: '4px 0 0', fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-            AI Training Evolution Depth Analysis
+            AI训练进化深度分析
           </p>
         </div>
       </div>
@@ -111,13 +111,13 @@ const SelfImprovementAssessment = ({ comprehensive, fetchSelfImprovement }) => {
       }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
           <div>
-            <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '4px' }}>Current Evolution Level</div>
+            <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '4px' }}>当前进化等级</div>
             <div style={{ fontSize: '1.5rem', color: currentLevel.color, fontWeight: 'bold' }}>
               {currentLevel.label}
             </div>
           </div>
           <div style={{ textAlign: 'right' }}>
-            <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '4px' }}>Capability Score</div>
+            <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '4px' }}>能力评分</div>
             <div style={{ fontSize: '1.5rem', color: '#fff', fontWeight: 'bold' }}>
               {assessment.capability_score || 0}/100
             </div>
@@ -143,15 +143,15 @@ const SelfImprovementAssessment = ({ comprehensive, fetchSelfImprovement }) => {
           ))}
         </div>
         <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '8px', fontSize: '0.65rem', color: 'var(--text-muted)' }}>
-          <span>Inference</span>
-          <span>Self-Improve</span>
+          <span>推理</span>
+          <span>自进化</span>
         </div>
       </div>
 
       <div style={{ marginBottom: '24px' }}>
         <h4 style={{ fontSize: '0.9rem', color: '#fff', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
           <Target size={16} color="var(--primary-neon)" />
-          Evolution Roadmap
+          进化路线图
         </h4>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
           {evolutionRoadmap.map((phase, idx) => (
@@ -193,7 +193,7 @@ const SelfImprovementAssessment = ({ comprehensive, fetchSelfImprovement }) => {
                   {phase.description}
                 </div>
                 <div style={{ fontSize: '0.75rem', color: phase.achievable ? 'var(--success-neon)' : 'var(--warning-neon)' }}>
-                  Requirements: {phase.requirements}
+                  需求: {phase.requirements}
                 </div>
               </div>
             </div>
@@ -204,7 +204,7 @@ const SelfImprovementAssessment = ({ comprehensive, fetchSelfImprovement }) => {
       <div>
         <h4 style={{ fontSize: '0.9rem', color: '#fff', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
           <TrendingUp size={16} color="var(--primary-neon)" />
-          Skill Development Matrix
+          技能发展矩阵
         </h4>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
           {skillMatrix.map((skill, idx) => (
@@ -247,7 +247,7 @@ const SelfImprovementAssessment = ({ comprehensive, fetchSelfImprovement }) => {
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
             <AlertTriangle size={14} color="var(--warning-neon)" />
             <span style={{ fontSize: '0.8rem', color: 'var(--warning-neon)', fontWeight: 'bold' }}>
-              Current Limitations
+              当前限制
             </span>
           </div>
           <ul style={{ margin: 0, paddingLeft: '20px', fontSize: '0.75rem', color: 'var(--text-muted)' }}>

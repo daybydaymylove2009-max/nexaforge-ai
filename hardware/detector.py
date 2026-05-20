@@ -176,6 +176,95 @@ class HardwareDetector:
         if settings.ENABLE_CACHE and hasattr(self, 'cache'):
             self.cache[key] = value
 
+    def get_motherboard_info(self) -> Dict[str, Any]:
+        mb_info = {
+            "manufacturer": "未知",
+            "model": "未知",
+            "version": "未知",
+            "serial_number": "未知",
+            "bios_vendor": "未知",
+            "bios_version": "未知",
+            "bios_release_date": "未知",
+            "chipset": "未知",
+            "cpu_model": "未知"
+        }
+
+        try:
+            if platform.system() == "Windows":
+                ps_commands = [
+                    "Get-WmiObject -Class Win32_BaseBoard | Select-Object -Property Manufacturer,Product,Version,SerialNumber | ConvertTo-Json",
+                    "Get-WmiObject -Class Win32_BIOS | Select-Object -Property Manufacturer,SMBIOSBIOSVersion,ReleaseDate | ConvertTo-Json",
+                    "Get-WmiObject -Class Win32_Processor | Select-Object -Property Name | ConvertTo-Json"
+                ]
+
+                for cmd in ps_commands:
+                    try:
+                        result = self._safe_exec(
+                            ["powershell", "-Command", cmd],
+                            timeout=10
+                        )
+                        if result and result.strip():
+                            import json as _json
+                            try:
+                                data = _json.loads(result)
+                                if isinstance(data, list):
+                                    data = data[0]
+                                if 'Manufacturer' in data and 'Product' in data:
+                                    mb_info["manufacturer"] = data.get('Manufacturer', '').strip() or "未知"
+                                    mb_info["model"] = data.get('Product', '').strip() or "未知"
+                                    mb_info["version"] = data.get('Version', '').strip() or "未知"
+                                    mb_info["serial_number"] = data.get('SerialNumber', '').strip() or "未知"
+                                elif 'SMBIOSBIOSVersion' in data:
+                                    mb_info["bios_vendor"] = data.get('Manufacturer', '').strip() or "未知"
+                                    mb_info["bios_version"] = data.get('SMBIOSBIOSVersion', '').strip() or "未知"
+                                    mb_info["bios_release_date"] = data.get('ReleaseDate', '').strip() or "未知"
+                                elif 'Name' in data:
+                                    mb_info["cpu_model"] = data.get('Name', '').strip() or "未知"
+                            except _json.JSONDecodeError:
+                                pass
+                    except Exception:
+                        pass
+
+            elif platform.system() == "Linux":
+                try:
+                    with open('/sys/class/dmi/id/board_vendor', 'r') as f:
+                        mb_info["manufacturer"] = f.read().strip()
+                except Exception:
+                    pass
+                try:
+                    with open('/sys/class/dmi/id/board_name', 'r') as f:
+                        mb_info["model"] = f.read().strip()
+                except Exception:
+                    pass
+                try:
+                    with open('/sys/class/dmi/id/board_version', 'r') as f:
+                        mb_info["version"] = f.read().strip()
+                except Exception:
+                    pass
+                try:
+                    with open('/sys/class/dmi/id/bios_vendor', 'r') as f:
+                        mb_info["bios_vendor"] = f.read().strip()
+                except Exception:
+                    pass
+                try:
+                    with open('/sys/class/dmi/id/bios_version', 'r') as f:
+                        mb_info["bios_version"] = f.read().strip()
+                except Exception:
+                    pass
+                try:
+                    with open('/proc/cpuinfo', 'r') as f:
+                        for line in f:
+                            if line.startswith('model name'):
+                                mb_info["cpu_model"] = line.split(':')[1].strip()
+                                break
+                except Exception:
+                    pass
+
+        except Exception:
+            pass
+
+        return mb_info
+
     def get_system_info(self) -> Dict[str, Any]:
         """获取系统信息"""
         cached = self._get_from_cache("system_info")
@@ -336,13 +425,15 @@ class HardwareDetector:
         return gpu_info
 
     def get_disk_info(self) -> Dict[str, Any]:
-        """获取磁盘信息"""
         disk_info = {
             "total": 0.0,
             "used": 0.0,
             "free": 0.0,
             "percent": 0.0,
-            "partitions": []
+            "partitions": [],
+            "main": None,
+            "read_mbs": 0.0,
+            "write_mbs": 0.0
         }
 
         if PSUTIL_AVAILABLE:
@@ -367,8 +458,63 @@ class HardwareDetector:
                         pass
                 if disk_info["total"] > 0:
                     disk_info["percent"] = (disk_info["used"] / disk_info["total"]) * 100
+
+                main_disk = None
+                for part in disk_info["partitions"]:
+                    if "C:" in part["device"] or "/" == part["mountpoint"]:
+                        main_disk = dict(part)
+                        break
+
+                if main_disk:
+                    main_disk["type"] = "Unknown"
+                    if platform.system() == "Windows":
+                        try:
+                            cmd = "Get-PhysicalDisk | Select-Object DeviceId, MediaType | ConvertTo-Json"
+                            stdout = self._safe_exec(["powershell", "-Command", cmd], timeout=5)
+                            if stdout and stdout.strip():
+                                import json as _json
+                                disk_data = _json.loads(stdout)
+                                if isinstance(disk_data, list):
+                                    if len(disk_data) > 0 and disk_data[0]:
+                                        main_disk["type"] = disk_data[0].get("MediaType", "Unknown")
+                                elif disk_data:
+                                    main_disk["type"] = disk_data.get("MediaType", "Unknown")
+                        except Exception:
+                            pass
+                    elif platform.system() == "Linux":
+                        try:
+                            for dev in os.listdir('/sys/block'):
+                                if dev.startswith('sd') or dev.startswith('nvme'):
+                                    with open(f'/sys/block/{dev}/queue/rotational', 'r') as f:
+                                        is_rotational = f.read().strip() == '1'
+                                        main_disk["type"] = "HDD" if is_rotational else "SSD"
+                                        if dev.startswith('nvme'):
+                                            main_disk["type"] = "NVMe SSD"
+                                        break
+                        except Exception:
+                            pass
+
+                if main_disk:
+                    disk_info["main"] = main_disk
             except Exception as e:
                 logger.error(f"获取磁盘信息失败: {e}")
+
+        if PSUTIL_AVAILABLE:
+            try:
+                current_time = time.time()
+                current_io = psutil.disk_io_counters()
+                if current_io and self.last_disk_io and self.last_disk_time > 0:
+                    time_diff = current_time - self.last_disk_time
+                    if time_diff > 0:
+                        read_bytes = current_io.read_bytes - self.last_disk_io.read_bytes
+                        write_bytes = current_io.write_bytes - self.last_disk_io.write_bytes
+                        disk_info["read_mbs"] = max(0, (read_bytes / time_diff) / (1024 * 1024))
+                        disk_info["write_mbs"] = max(0, (write_bytes / time_diff) / (1024 * 1024))
+
+                self.last_disk_io = current_io
+                self.last_disk_time = current_time
+            except Exception:
+                pass
 
         return disk_info
 
@@ -400,30 +546,249 @@ class HardwareDetector:
 
         return network_info
 
+    def _wake_gpu_read_temp(self) -> int:
+        try:
+            import threading
+            import time as _time
+
+            result_temp = [0]
+
+            def _gpu_stress():
+                try:
+                    import ctypes
+                    d3d9 = ctypes.windll.LoadLibrary("d3d9.dll")
+                    d3d9.Direct3DCreate9(31)
+                    _time.sleep(1.5)
+                except Exception:
+                    pass
+
+            stress_thread = threading.Thread(target=_gpu_stress, daemon=True)
+            stress_thread.start()
+            _time.sleep(0.5)
+
+            if PYNVML_AVAILABLE:
+                try:
+                    pynvml.nvmlInit()
+                    handle = pynvml.nvmlDeviceGetHandleByIndex(0)
+                    for _ in range(5):
+                        temp = pynvml.nvmlDeviceGetTemperature(handle, pynvml.NVML_TEMPERATURE_GPU)
+                        if temp > 0:
+                            result_temp[0] = temp
+                            break
+                        _time.sleep(0.5)
+                    pynvml.nvmlShutdown()
+                except Exception:
+                    pass
+
+            if result_temp[0] == 0:
+                try:
+                    result = self._safe_exec(
+                        ["nvidia-smi", "--query-gpu=temperature.gpu", "--format=csv,noheader,nounits"],
+                        timeout=5
+                    )
+                    if result and result.strip().isdigit():
+                        t = int(result.strip())
+                        if t > 0:
+                            result_temp[0] = t
+                except Exception:
+                    pass
+
+            stress_thread.join(timeout=3)
+            return result_temp[0]
+        except Exception:
+            return 0
+
     def get_temperature_info(self) -> Dict[str, Any]:
-        """获取温度信息"""
         temp_info = {
             "cpu_temp": 0.0,
             "gpu_temp": 0.0,
             "available": False,
-            "details": {}
+            "details": {},
+            "cpu": "未知",
+            "gpu": "待机中",
+            "motherboard": "未知",
+            "sources": []
         }
 
-        if PSUTIL_AVAILABLE:
-            try:
+        try:
+            if platform.system() == "Windows" and WIN32COM_AVAILABLE:
+                try:
+                    import win32com.client
+                    wmi = win32com.client.GetObject("winmgmts:")
+
+                    for sensor in wmi.InstancesOf("Win32_TemperatureProbe"):
+                        try:
+                            name = str(sensor.Name).lower() if sensor.Name else ""
+                            current_temp = sensor.CurrentReading
+                            if current_temp and current_temp > 0:
+                                temp_celsius = current_temp / 10.0
+                                temp_info["sources"].append(f"WMI: {sensor.Name}")
+
+                                if "cpu" in name or "processor" in name:
+                                    if temp_info["cpu"] == "未知":
+                                        temp_info["cpu"] = f"{round(temp_celsius)}°C"
+                                        temp_info["cpu_temp"] = temp_celsius
+                                elif "motherboard" in name or "system" in name or "board" in name:
+                                    if temp_info["motherboard"] == "未知":
+                                        temp_info["motherboard"] = f"{round(temp_celsius)}°C"
+                        except Exception:
+                            pass
+                except Exception:
+                    pass
+
+            if platform.system() == "Windows":
+                try:
+                    result = self._safe_exec(
+                        ["powershell", "-Command",
+                         "Get-WmiObject -Class Win32_PerfFormattedData_Counters_ThermalZoneInformation | Select-Object -Property Name,Temperature | ConvertTo-Json"],
+                        timeout=10
+                    )
+                    if result and result.strip():
+                        import json as _json
+                        try:
+                            data = _json.loads(result)
+                            if isinstance(data, list):
+                                data = data[0]
+                            if 'Temperature' in data and data['Temperature'] > 0:
+                                temp_celsius = data['Temperature'] / 10.0
+                                if temp_info["cpu"] == "未知":
+                                    temp_info["cpu"] = f"{round(temp_celsius)}°C"
+                                    temp_info["cpu_temp"] = temp_celsius
+                                temp_info["sources"].append("PowerShell: Win32_PerfFormattedData")
+                        except _json.JSONDecodeError:
+                            pass
+                except Exception:
+                    pass
+
+            if PSUTIL_AVAILABLE and hasattr(psutil, 'sensors_temperatures'):
                 try:
                     temps = psutil.sensors_temperatures()
                     if temps:
+                        if 'coretemp' in temps:
+                            cpu_temps = [t.current for t in temps['coretemp']]
+                            if cpu_temps:
+                                avg_temp = sum(cpu_temps) / len(cpu_temps)
+                                if temp_info["cpu"] == "未知":
+                                    temp_info["cpu"] = f"{round(avg_temp)}°C"
+                                    temp_info["cpu_temp"] = avg_temp
+                                temp_info["sources"].append("psutil: coretemp")
+
+                        if 'acpitz' in temps:
+                            mb_temps = [t.current for t in temps['acpitz']]
+                            if mb_temps and temp_info["motherboard"] == "未知":
+                                temp_info["motherboard"] = f"{round(sum(mb_temps)/len(mb_temps))}°C"
+                                temp_info["sources"].append("psutil: acpitz")
+
                         for name, entries in temps.items():
                             for entry in entries:
-                                if 'cpu' in name.lower():
-                                    temp_info["cpu_temp"] = entry.current
                                 temp_info["details"][name] = entry.current
+
                         temp_info["available"] = True
                 except Exception:
                     pass
-            except Exception as e:
-                logger.error(f"获取温度信息失败: {e}")
+
+            if platform.system() == "Linux":
+                try:
+                    import glob as _glob
+                    for path in _glob.glob('/sys/class/hwmon/hwmon*/temp1_input'):
+                        try:
+                            with open(path, 'r') as f:
+                                temp = int(f.read().strip()) / 1000
+                                if temp > 0 and temp_info["motherboard"] == "未知":
+                                    temp_info["motherboard"] = f"{round(temp)}°C"
+                                    temp_info["sources"].append("sysfs: motherboard")
+                        except Exception:
+                            pass
+                except Exception:
+                    pass
+
+            gpu_temp_obtained = False
+            if PYNVML_AVAILABLE:
+                try:
+                    pynvml.nvmlInit()
+                    device_count = pynvml.nvmlDeviceGetCount()
+                    if device_count > 0:
+                        handle = pynvml.nvmlDeviceGetHandleByIndex(0)
+                        temp = pynvml.nvmlDeviceGetTemperature(handle, pynvml.NVML_TEMPERATURE_GPU)
+                        if temp > 0:
+                            temp_info["gpu"] = f"{temp}°C"
+                            temp_info["gpu_temp"] = float(temp)
+                            temp_info["sources"].append("NVML")
+                            gpu_temp_obtained = True
+                        else:
+                            try:
+                                power = pynvml.nvmlDeviceGetPowerUsage(handle) / 1000.0
+                                utilization = pynvml.nvmlDeviceGetUtilizationRates(handle)
+                                pstate = ""
+                                try:
+                                    pstate_result = self._safe_exec(
+                                        ["nvidia-smi", "--query-gpu=pstate", "--format=csv,noheader"],
+                                        timeout=3
+                                    )
+                                    if pstate_result:
+                                        pstate = pstate_result.strip()
+                                except Exception:
+                                    pass
+
+                                if "P8" in pstate or power < 5:
+                                    temp_info["gpu"] = "待机中 (P8)"
+                                    temp_info["gpu_temp"] = 0.0
+                                    temp_info["sources"].append("NVML+P8检测")
+                                    gpu_temp_obtained = True
+
+                                    try:
+                                        wake_temp = self._wake_gpu_read_temp()
+                                        if wake_temp > 0:
+                                            temp_info["gpu"] = f"{wake_temp}°C"
+                                            temp_info["gpu_temp"] = float(wake_temp)
+                                            temp_info["sources"].append("NVML+GPU唤醒探测")
+                                    except Exception:
+                                        pass
+                                elif power > 1 or utilization.gpu > 1:
+                                    temp_info["gpu"] = f"{temp}°C (传感器待机)"
+                                    temp_info["gpu_temp"] = float(temp)
+                                    temp_info["sources"].append("NVML")
+                                    gpu_temp_obtained = True
+                            except Exception:
+                                pass
+                    pynvml.nvmlShutdown()
+                except Exception:
+                    pass
+
+            if not gpu_temp_obtained:
+                try:
+                    result = self._safe_exec(
+                        ["nvidia-smi", "--query-gpu=temperature.gpu,power.draw,fan.speed,utilization.gpu", "--format=csv,noheader,nounits"],
+                        timeout=5
+                    )
+                    if result and result.strip():
+                        parts = result.strip().split(',')
+                        if parts:
+                            temp_value = parts[0].strip()
+                            if temp_value.isdigit():
+                                temp_int = int(temp_value)
+                                if temp_int > 0:
+                                    temp_info["gpu"] = f"{temp_int}°C"
+                                    temp_info["gpu_temp"] = float(temp_int)
+                                    temp_info["sources"].append("nvidia-smi")
+                                    gpu_temp_obtained = True
+                                elif len(parts) > 1 and parts[1].strip():
+                                    try:
+                                        power = float(parts[1].strip())
+                                        if power > 1:
+                                            temp_info["gpu"] = "低功耗模式"
+                                            temp_info["sources"].append("nvidia-smi")
+                                            gpu_temp_obtained = True
+                                    except Exception:
+                                        pass
+                except Exception:
+                    pass
+
+            if not gpu_temp_obtained:
+                temp_info["gpu"] = "不支持"
+
+        except Exception as e:
+            logger.error(f"获取温度信息失败: {e}")
 
         return temp_info
 
@@ -494,25 +859,25 @@ class HardwareDetector:
                             "compute_capability": f"{device_props.major}.{device_props.minor}"
                         })
             except Exception as e:
-                logger.warning(f"PyTorch CUDA 检测失败: {e}")
+                logger.warning(f"torch CUDA 检测失败: {e}")
 
         return cuda_info
 
     def get_ai_framework_info(self) -> Dict[str, Any]:
-        """获取AI框架信息"""
         framework_info = {
             "torch_available": TORCH_AVAILABLE,
             "torch_version": "",
             "tensorflow_available": TENSORFLOW_AVAILABLE,
             "tensorflow_version": "",
-            "packages": []
+            "packages": [],
+            "python_packages": []
         }
 
         if TORCH_AVAILABLE:
             try:
                 framework_info["torch_version"] = torch.__version__
                 framework_info["packages"].append({
-                    "name": "PyTorch",
+                    "name": "torch",
                     "version": torch.__version__
                 })
             except Exception:
@@ -528,7 +893,105 @@ class HardwareDetector:
             except Exception:
                 pass
 
+        common_packages = [
+            "torch", "torchaudio", "torchvision",
+            "transformers", "datasets", "accelerate", "peft", "bitsandbytes",
+            "flash_attn", "xformers", "deepspeed", "trl",
+            "numpy", "pandas", "scipy", "scikit-learn", "matplotlib",
+            "pillow", "opencv-python", "sentencepiece", "tiktoken"
+        ]
+
+        for pkg in common_packages:
+            try:
+                import importlib.metadata
+                version = importlib.metadata.version(pkg)
+                framework_info["python_packages"].append({
+                    "name": pkg,
+                    "version": version,
+                    "available": True
+                })
+            except Exception:
+                framework_info["python_packages"].append({
+                    "name": pkg,
+                    "version": "未安装",
+                    "available": False
+                })
+
         return framework_info
+
+    def get_gpu_topology(self) -> Dict[str, Any]:
+        topology = {
+            "nvlink_detected": False,
+            "interconnects": [],
+            "max_link_count": 0,
+            "topology_type": "PCIe (Single/Multi)",
+            "bottlenecks": [],
+            "raw_matrix": []
+        }
+
+        try:
+            stdout = self._safe_exec(["nvidia-smi", "topo", "-m"], timeout=5)
+            if not stdout:
+                return topology
+
+            lines = stdout.strip().split('\n')
+            topology["raw_matrix"] = lines[:12]
+
+            header = []
+            matrix_start_idx = -1
+            for idx, line in enumerate(lines):
+                if "GPU" in line and "CPU Affinity" in line:
+                    header = line.split()
+                    matrix_start_idx = idx + 1
+                    break
+
+            if matrix_start_idx == -1 or not header:
+                if "NV" in (stdout or ""):
+                    topology["nvlink_detected"] = True
+                return topology
+
+            gpu_cols = [h for h in header if h.startswith("GPU")]
+            num_gpus = len(gpu_cols)
+
+            nvlink_connections = 0
+            for i in range(num_gpus):
+                line_idx = matrix_start_idx + i
+                if line_idx >= len(lines):
+                    break
+                row_parts = lines[line_idx].split()
+                for j in range(num_gpus):
+                    if i == j:
+                        continue
+                    if j + 1 < len(row_parts):
+                        conn_code = row_parts[j + 1]
+                        if i < j:
+                            topology["interconnects"].append({
+                                "from": f"GPU{i}", "to": f"GPU{j}", "type": conn_code,
+                                "quality": "high" if "NV" in conn_code else "medium" if "PX" in conn_code or "PI" in conn_code else "low"
+                            })
+                        if "NV" in conn_code:
+                            topology["nvlink_detected"] = True
+                            nvlink_connections += 1
+                            try:
+                                link_num = int(''.join(filter(str.isdigit, conn_code)))
+                                topology["max_link_count"] = max(topology["max_link_count"], link_num)
+                            except Exception:
+                                pass
+                        if conn_code in ["SYS", "NODE"]:
+                            topology["bottlenecks"].append(f"GPU{i} <-> GPU{j} 跨 Socket 通讯，可能存在严重的 P2P 延迟")
+
+            if topology["nvlink_detected"]:
+                topology["topology_type"] = "NVLink Fully Connected (Mesh)" if nvlink_connections >= (num_gpus * (num_gpus - 1)) else "NVLink Partial Connected / Ring"
+            elif num_gpus > 1:
+                topology["topology_type"] = "PCIe Switch/Bridge Cascade"
+            else:
+                topology["topology_type"] = "Single Device (No Interconnect)"
+
+            topology["bottlenecks"] = list(set(topology["bottlenecks"]))
+        except Exception as e:
+            logger.error(f"GPU 拓扑解析失败: {str(e)}")
+
+        return topology
 
     def get_numa_nodes(self) -> int:
         """获取NUMA节点数"""
@@ -630,13 +1093,57 @@ class HardwareDetector:
             mode = "entry"
             estimated_time = "4-8小时"
 
+        modes = {
+            "premium": {
+                "name": "最大模式",
+                "name_en": "Premium",
+                "desc": "多卡A100/H100，极速训练",
+                "icon": "🚀"
+            },
+            "enterprise": {
+                "name": "土豪模式",
+                "name_en": "Enterprise",
+                "desc": "高端GPU，高效训练",
+                "icon": "👑"
+            },
+            "professional": {
+                "name": "富人模式",
+                "name_en": "Professional",
+                "desc": "中高端GPU，稳定训练",
+                "icon": "💎"
+            },
+            "standard": {
+                "name": "常态模式",
+                "name_en": "Standard",
+                "desc": "标准配置，常规训练",
+                "icon": "⚖️"
+            },
+            "basic": {
+                "name": "穷人模式",
+                "name_en": "Basic",
+                "desc": "基础配置，耐心训练",
+                "icon": "💰"
+            },
+            "entry": {
+                "name": "入门模式",
+                "name_en": "Entry",
+                "desc": "入门配置，长期训练",
+                "icon": "🌱"
+            }
+        }
+
         return {
             "score": score,
             "max_model_size": max_model,
             "recommended_mode": mode,
             "estimated_time": estimated_time,
             "gpu_accelerated": gpu_available,
-            "suitable_models": self._get_suitable_models(snapshot)
+            "suitable_models": self._get_suitable_models(snapshot),
+            "modes": modes,
+            "model_recommendation": {
+                "max_model_size": max_model,
+                "estimated_time": estimated_time
+            }
         }
 
     def _get_suitable_models(self, snapshot: Dict[str, Any]) -> List[str]:
@@ -684,10 +1191,14 @@ class HardwareDetector:
                 "power": self.get_power_info(),
                 "cuda": self.get_cuda_info(),
                 "ai_frameworks": self.get_ai_framework_info(),
-                "numa_nodes": self.get_numa_nodes()
+                "numa_nodes": self.get_numa_nodes(),
+                "motherboard": self.get_motherboard_info(),
+                "gpu_topology": self.get_gpu_topology()
             }
 
             snapshot["score"] = self.calculate_hardware_score(snapshot)
+            snapshot["compute_ladder"] = self._get_compute_ladder(snapshot)
+            snapshot["storage_prediction"] = self.predict_storage_bottleneck(snapshot)
             recommendations = self.get_training_recommendations(snapshot)
             snapshot["recommendations"] = recommendations
 
@@ -702,6 +1213,108 @@ class HardwareDetector:
         except Exception as e:
             logger.error(f"生成快照失败: {e}")
             return {"error": str(e), "timestamp": datetime.now().isoformat()}
+
+    def _get_compute_ladder(self, snapshot: Dict[str, Any]) -> List[Dict[str, Any]]:
+        reference_devices = [
+            {"name": "NVIDIA H200 (141GB)", "score": 130, "tier": "Enterprise"},
+            {"name": "AMD MI300X (192GB)", "score": 115, "tier": "Enterprise"},
+            {"name": "NVIDIA H100 (80GB)", "score": 100, "tier": "Enterprise"},
+            {"name": "NVIDIA RTX 5090 (32GB)", "score": 92, "tier": "Consumer Next-Gen"},
+            {"name": "NVIDIA RTX 5090D (32GB)", "score": 82, "tier": "Consumer Next-Gen"},
+            {"name": "NVIDIA A100 (80GB)", "score": 75, "tier": "Enterprise"},
+            {"name": "HUAWEI Ascend 910B", "score": 72, "tier": "Enterprise"},
+            {"name": "NVIDIA RTX 5080 (16GB)", "score": 68, "tier": "Consumer Next-Gen"},
+            {"name": "NVIDIA RTX 4090 (24GB)", "score": 55, "tier": "Consumer"},
+            {"name": "NVIDIA RTX 4090D (24GB)", "score": 49, "tier": "Consumer"},
+            {"name": "NVIDIA L40S (48GB)", "score": 52, "tier": "Enterprise"},
+            {"name": "NVIDIA RTX 5070 Ti (16GB)", "score": 46, "tier": "Consumer Next-Gen"},
+            {"name": "NVIDIA RTX 4080 (16GB)", "score": 40, "tier": "Consumer"},
+            {"name": "NVIDIA RTX 3090 (24GB)", "score": 35, "tier": "Consumer"},
+            {"name": "Apple M3 Max (128GB Unified)", "score": 28, "tier": "Edge/Workstation"},
+            {"name": "Loongson 3A6000 (CPU)", "score": 5, "tier": "Edge"},
+        ]
+
+        gpu_devices = snapshot.get("gpu", {}).get("devices", [])
+        if not gpu_devices:
+            current_score = 2
+            current_name = snapshot.get("cpu", {}).get("model", "当前 CPU")
+        else:
+            main_gpu = gpu_devices[0]
+            name = main_gpu.get("name", "未知显卡")
+            vram = main_gpu.get("memory_total", 0)
+            upper_name = name.upper()
+
+            if "H200" in upper_name:
+                current_score = 130
+            elif "H100" in upper_name:
+                current_score = 100
+            elif "5090D" in upper_name:
+                current_score = 82
+            elif "5090" in upper_name:
+                current_score = 92
+            elif "A100" in upper_name:
+                current_score = 75
+            elif "910B" in upper_name or "ASCEND 910" in upper_name:
+                current_score = 72
+            elif "5080" in upper_name:
+                current_score = 68
+            elif "4090D" in upper_name:
+                current_score = 49
+            elif "4090" in upper_name:
+                current_score = 55
+            elif "5070" in upper_name:
+                current_score = 46
+            elif "3090" in upper_name:
+                current_score = 35
+            elif "MI300" in upper_name:
+                current_score = 115
+            elif "A800" in upper_name:
+                current_score = 70
+            elif "H800" in upper_name:
+                current_score = 90
+            elif "V100" in upper_name:
+                current_score = 40
+            elif "RTX 4080" in upper_name:
+                current_score = 42
+            elif "RTX 3080" in upper_name:
+                current_score = 30
+            elif "L40" in upper_name:
+                current_score = 50
+            elif "A10" in upper_name:
+                current_score = 35
+            else:
+                current_score = min(30, int(vram * 1.2))
+
+            current_name = f"当前设备: {name}"
+
+        ladder = reference_devices + [{"name": current_name, "score": current_score, "is_current": True, "tier": "Your Device"}]
+        ladder.sort(key=lambda x: x["score"], reverse=True)
+        max_score = max(x["score"] for x in ladder)
+        for item in ladder:
+            item["display_percent"] = int((item["score"] / max_score) * 100)
+
+        return ladder
+
+    def predict_storage_bottleneck(self, snapshot: Dict[str, Any]) -> Dict[str, Any]:
+        disk = snapshot.get("disk", {})
+        main = disk.get("main", {})
+        if not main:
+            return {"risk": "low", "message": "未发现活跃主磁盘"}
+
+        usage_percent = main.get("percent", 0)
+        free_gb = main.get("free", 0)
+
+        if free_gb < 50 or usage_percent > 90:
+            return {
+                "risk": "critical",
+                "message": f"存储告急！剩余 {free_gb:.1f}GB，可能导致训练中断。"
+            }
+        elif usage_percent > 80:
+            return {
+                "risk": "warning",
+                "message": "存储空间紧张，建议扩容。"
+            }
+        return {"risk": "healthy", "message": "存储空间充足"}
 
     def get_history(self) -> List[Dict[str, Any]]:
         """获取历史数据"""

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-智核万炼® NexaForge AI - 硬件检测核心模块 (v2.0)
+智核万炼® NexaForge AI - 硬件检测核心模块 (v2.1)
 Hardware Detection Core Module
 """
 
@@ -18,8 +18,10 @@ from typing import Dict, Any, List, Optional
 from datetime import datetime
 from functools import lru_cache
 from cachetools import TTLCache
+from tenacity import retry, stop_after_attempt, wait_exponential, retry_if_exception_type
 
 from .config import settings
+from .resilience import CircuitBreaker, retry_on_failure
 
 logging.basicConfig(
     level=logging.INFO,
@@ -31,7 +33,7 @@ logging.basicConfig(
 )
 logger = logging.getLogger("HardwareDetector")
 
-VERSION = "2.0.0"
+VERSION = "2.1.0"
 
 try:
     import psutil
@@ -66,7 +68,7 @@ except ImportError:
 
 
 class HardwareDetector:
-    """硬件实时检测器 v2.0"""
+    """硬件实时检测器 v2.1 - 增强版"""
 
     def __init__(self):
         self.db_file = settings.DB_FILE
@@ -78,12 +80,17 @@ class HardwareDetector:
         self.last_disk_time = 0
         self.numa_nodes = -1
         self.heartbeat_count = 0
+        self.last_snapshot = None
 
         # 缓存机制
         if settings.ENABLE_CACHE:
             self.cache = TTLCache(maxsize=100, ttl=settings.CACHE_TTL)
         else:
             self.cache = {}
+
+        # 断路器 - 防止级联故障
+        self.gpu_circuit_breaker = CircuitBreaker(failure_threshold=5, recovery_timeout=60.0)
+        self.db_circuit_breaker = CircuitBreaker(failure_threshold=3, recovery_timeout=30.0)
 
         logger.info(f"硬件检测引擎 v{VERSION} 初始化完成")
 

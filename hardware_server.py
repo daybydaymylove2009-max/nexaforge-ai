@@ -1,15 +1,16 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-智核万炼® NexaForge AI - 硬件监控API服务器 v2.0
+智核万炼® NexaForge AI - 硬件监控API服务器 v2.1
 NexaForge AI Hardware Monitoring API Server
 """
 
 import asyncio
 import os
 from pathlib import Path
-from fastapi import FastAPI, WebSocket, WebSocketDisconnect
+from fastapi import FastAPI, WebSocket, WebSocketDisconnect, Request
 from fastapi.staticfiles import StaticFiles
+from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 import uvicorn
 
@@ -17,13 +18,15 @@ from hardware import detector
 from hardware.routes import router as api_router
 from hardware.middleware import RateLimitMiddleware
 from hardware.config import settings
+from hardware.monitoring import create_instrumentator
 
 app = FastAPI(
     title="智核万炼 - NexaForge AI 硬件监控API",
     description="企业级硬件检测与AI训练环境评估平台",
-    version="2.0.0",
+    version="2.1.0",
     docs_url="/docs",
-    redoc_url="/redoc"
+    redoc_url="/redoc",
+    openapi_url="/openapi.json"
 )
 
 app.add_middleware(
@@ -38,6 +41,9 @@ if settings.ENABLE_RATE_LIMIT:
     app.add_middleware(RateLimitMiddleware)
 
 app.include_router(api_router, prefix=settings.API_PREFIX)
+
+instrumentator = create_instrumentator()
+instrumentator.instrument(app).expose(app, endpoint="/metrics")
 
 
 class ConnectionManager:
@@ -70,6 +76,7 @@ async def get_snapshot_legacy():
     """获取硬件快照 (兼容旧版本)"""
     snapshot = await asyncio.to_thread(detector.get_hardware_snapshot)
     recommendations = await asyncio.to_thread(detector.get_training_recommendations, snapshot)
+    detector.last_snapshot = snapshot
     return {
         "snapshot": snapshot,
         "recommendations": recommendations
@@ -98,6 +105,7 @@ async def websocket_endpoint(websocket: WebSocket):
         while True:
             snapshot = await asyncio.to_thread(detector.get_hardware_snapshot)
             recommendations = await asyncio.to_thread(detector.get_training_recommendations, snapshot)
+            detector.last_snapshot = snapshot
             await manager.broadcast({
                 "snapshot": snapshot,
                 "recommendations": recommendations
@@ -114,21 +122,74 @@ async def root():
     """根路径"""
     return {
         "name": "智核万炼 NexaForge AI",
-        "version": "2.0.0",
+        "version": "2.1.0",
         "description": "企业级硬件检测与AI训练环境评估平台",
         "docs": "/docs",
-        "api": "/api/v1"
+        "api": "/api/v1",
+        "metrics": "/metrics"
     }
 
 
 @app.get("/health")
 async def health_check():
-    """健康检查"""
+    """基础健康检查"""
     return {
         "status": "healthy",
         "service": "NexaForge AI Hardware Monitor",
-        "version": "2.0.0"
+        "version": "2.1.0"
     }
+
+
+@app.get("/health/live")
+async def liveness():
+    """存活探针 - 检查服务是否存活"""
+    return {
+        "status": "alive",
+        "timestamp": detector.get_hardware_snapshot()["timestamp"]
+    }
+
+
+@app.get("/health/ready")
+async def readiness():
+    """就绪探针 - 检查服务是否准备就绪"""
+    try:
+        cpu_info = detector.get_cpu_info()
+        memory_info = detector.get_memory_info()
+
+        is_ready = (
+            cpu_info is not None and
+            memory_info is not None and
+            len(cpu_info) > 0 and
+            len(memory_info) > 0
+        )
+
+        if is_ready:
+            return {
+                "status": "ready",
+                "checks": {
+                    "cpu": "ok",
+                    "memory": "ok"
+                }
+            }
+        else:
+            return JSONResponse(
+                status_code=503,
+                content={
+                    "status": "not_ready",
+                    "checks": {
+                        "cpu": "ok" if cpu_info else "failed",
+                        "memory": "ok" if memory_info else "failed"
+                    }
+                }
+            )
+    except Exception as e:
+        return JSONResponse(
+            status_code=503,
+            content={
+                "status": "not_ready",
+                "error": str(e)
+            }
+        )
 
 
 frontend_dist = Path(__file__).parent / settings.FRONTEND_DIST_DIR
@@ -142,14 +203,16 @@ else:
 
 if __name__ == "__main__":
     print("=" * 60)
-    print("智核万炼 NexaForge AI - 硬件监控服务 v2.0")
+    print("智核万炼 NexaForge AI - 硬件监控服务 v2.1")
     print("=" * 60)
     print(f"\n🌐 访问地址: http://localhost:{settings.PORT}")
     print(f"📚 API文档:   http://localhost:{settings.PORT}/docs")
     print(f"🔌 WebSocket: ws://localhost:{settings.PORT}/ws")
+    print(f"📊 监控指标:  http://localhost:{settings.PORT}/metrics")
     print(f"🔐 API版本:   {settings.API_PREFIX}")
     print(f"⚙️  认证:     {'启用' if settings.ENABLE_AUTH else '禁用'}")
     print(f"🚀 速率限制:  {'启用' if settings.ENABLE_RATE_LIMIT else '禁用'}")
+    print(f"📈 监控:      {'启用' if True else '禁用'}")
     print("=" * 60 + "\n")
 
     uvicorn.run(
